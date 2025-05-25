@@ -15,7 +15,7 @@ import os
 debug_dir = 'experiments/debug'
 os.makedirs(debug_dir, exist_ok=True)
 debug_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-debug_file = os.path.join(debug_dir, f'debug_{debug_timestamp}.log')
+debug_file = os.path.join(debug_dir, f'deb\ug_{debug_timestamp}.log')
 debug_array_dir = os.path.join(debug_dir, f'arrays_{debug_timestamp}')
 os.makedirs(debug_array_dir, exist_ok=True)
 
@@ -74,11 +74,6 @@ def encode_links(link_qubits: int, num_links: int) -> QuantumCircuit:
     for i in range(link_qubits):
         qc.h(i)
 
-    # for i in range(floor_links, num_links):
-    #     bin_repr = np.binary_repr(i, link_qubits)
-    #     (ctrl_qubits, target_qubit, state) = get_ctrl_qubits(bin_repr)
-    #     qc.append(HGate().control(num_ctrl_qubits=len(state), ctrl_state=state), ctrl_qubits + [target_qubit])
-    
     return qc
 
 def recover_quantity_classical_macros(state: Statevector, site_dims: list[int], num_links: int, original_norm: np.float64) -> NDArray[np.float64]:
@@ -130,7 +125,6 @@ def get_renorm_coeff(num_velocities: int) -> NDArray[np.float64]:
 
 def get_collision_diagonal(link_qubits: int, links: list[list[int]], weights: list[float], velocity_field: NDArray[np.float64], speed_of_sound: np.float64):
     num_links = len(links)
-    renorm_coeffs = get_renorm_coeff(num_links)
     
     dimension = list(velocity_field.shape)[0]
     velocity_field = velocity_field.reshape(dimension, -1, order='F')
