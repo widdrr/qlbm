@@ -8,39 +8,21 @@ from qiskit_aer import StatevectorSimulator
 from typing import Callable
 import csv
 import time
-from datetime import datetime
-import os
 
-# Global debug file setup
-debug_dir = 'experiments/debug'
-os.makedirs(debug_dir, exist_ok=True)
-debug_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-debug_file = os.path.join(debug_dir, f'deb\ug_{debug_timestamp}.log')
-debug_array_dir = os.path.join(debug_dir, f'arrays_{debug_timestamp}')
-os.makedirs(debug_array_dir, exist_ok=True)
-
-def write_debug(message: str | NDArray, label: str = "") -> None:
-    """Write a debug message or array to the debug files with timestamp.
+def write_array_to_csv(array: NDArray[np.float64], filename: str, mode: str = 'w') -> None:
+    """Write a numpy array to a CSV file.
     
     Args:
-        message: The message to write (string) or array to save
-        label: Optional label to identify the array in the filename
+        array: Numpy array to write to file
+        filename: Path to the CSV file
+        mode: File opening mode ('w' for write/overwrite, 'a' for append)
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    # Flatten array in Fortran order to match simulation data format
+    flat_array = array.flatten(order='F')
     
-    if isinstance(message, np.ndarray):
-        # Save array to a separate npy file
-        safe_label = "".join(c if c.isalnum() else "_" for c in label)
-        array_file = os.path.join(debug_array_dir, f'{safe_label}_{len(os.listdir(debug_array_dir)):04d}.npy')
-        np.save(array_file, message)
-        
-        # Write reference to the array file in the log
-        with open(debug_file, 'a', encoding='utf-8') as f:
-            f.write(f"[{timestamp}] Array saved ({message.shape}, {message.dtype}): {array_file}\n")
-    else:
-        # Write string message to log file
-        with open(debug_file, 'a', encoding='utf-8') as f:
-            f.write(f"[{timestamp}] {message}\n")
+    with open(filename, mode, newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(flat_array)
 
 def encode(variable: NDArray[np.float64], link_qubits: int) -> Statevector:
 
@@ -92,25 +74,28 @@ def recover_quantity_classical_macros(state: Statevector, site_dims: list[int], 
         start_idx = i * num_sites
         end_idx = (i + 1) * num_sites
         link_vals = state_array[start_idx:end_idx]
+        print(f"Link {i}: {link_vals}")
         
         # Reshape and add to total density
         density += link_vals.reshape(site_dims, order='F')
     
     density = np.real(density)
-    return original_norm * density / np.linalg.norm(density)
+    return original_norm * density
 
 def recover_quantity_quantum_macros(state: Statevector, site_dims: list[int], num_links: int, original_norm: np.float64) -> NDArray[np.float64]:
     # Get the statevector as numpy array
     state_array = np.array(state)
-    
+
     # Calculate total number of sites
     num_sites = np.prod(site_dims)
     
     # Initialize density array
     density = state_array[:num_sites].reshape(site_dims, order='F')
+
+    total_links = 2**np.ceil(np.log2(num_links))
     
     density = np.real(density)
-    return original_norm * density / np.linalg.norm(density)
+    return original_norm * density * total_links
 
 def get_renorm_coeff(num_velocities: int) -> NDArray[np.float64]:
     floor_qubits = int(np.floor(np.log2(num_velocities)))
@@ -315,3 +300,4 @@ def simulate_flow(initial_density: NDArray[np.float64],
                 print(f"  Execution: {execute_time:.3f} seconds")
                 print(f"  Total: {compile_time + execute_time:.3f} seconds")
             current_iterations += iterations
+
