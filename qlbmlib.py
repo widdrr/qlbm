@@ -253,8 +253,7 @@ def simulate_flow(initial_density: NDArray[np.float64],
     site_qubits_per_dim = [int(np.ceil(np.log2(sites))) for sites in sites_per_dim]
     site_qubits = np.sum(site_qubits_per_dim)
 
-    # Get original norm for proper normalization
-    original_norm = np.float64(np.linalg.norm(initial_density))
+    norm = np.float64(np.linalg.norm(initial_density))
 
     total_iterations = np.sum(list(map(lambda c: c[0], configs)))
 
@@ -289,7 +288,8 @@ def simulate_flow(initial_density: NDArray[np.float64],
                 execute_time = time.time() - execute_start
                 
                 # Recover density and normalize
-                initial_density = recover_quantity(state, sites_per_dim, num_links, original_norm)
+                initial_density = recover_quantity(state, sites_per_dim, num_links, norm)
+                norm = np.float64(np.linalg.norm(initial_density))
                 
                 # Write current state to CSV
                 writer.writerow(initial_density.flatten(order='F'))
