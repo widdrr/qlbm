@@ -8,6 +8,8 @@ from qiskit_aer import StatevectorSimulator
 from typing import Callable
 import csv
 import time
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def write_array_to_csv(array: NDArray[np.float64], filename: str, mode: str = 'w') -> None:
     """Write a numpy array to a CSV file.
@@ -301,3 +303,124 @@ def simulate_flow(initial_density: NDArray[np.float64],
                 print(f"  Total: {compile_time + execute_time:.3f} seconds")
             current_iterations += iterations
 
+def simulate_flow_classical(initial_density: NDArray[np.float64],
+                        configs: list[tuple[int, NDArray[np.float64], list[list[int]], list[float], float]],
+                        filename: str) -> None:
+    """Simulate classical Lattice Boltzmann Method flow.
+    
+    Args:
+        initial_density: Initial density distribution
+        configs: List of tuples containing (iterations, velocity_field, links, weights, speed_of_sound)
+        filename: Path to save the CSV file with simulation results
+    """
+    # Convert links and weights to numpy arrays for easier handling
+    total_iterations = np.sum(list(map(lambda c: c[0], configs)))
+    density = initial_density.copy()
+    
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(density.flatten(order='F'))
+        
+        current_iterations = 0
+        for config in configs:
+            iterations, velocity_field, links, weights, speed_of_sound = config
+            print(f"Classical simulation: iterations {current_iterations}-{current_iterations + iterations}/{total_iterations}")
+            
+            dimension = list(velocity_field.shape)[0]
+            
+            # Evolution loop
+            for t in range(iterations):
+                print(f"Classical Iteration {current_iterations + t + 1}/{total_iterations}")
+                
+                # Calculate equilibrium distributions
+                f = []
+                for i in range(len(links)):
+                    # Project velocity onto lattice direction
+                    # Reshape velocity field components back to grid shape for correct multiplication
+                    v_proj = np.sum([
+                        links[i][d] * velocity_field[d]
+                        for d in range(dimension)
+                    ], axis=0)
+                    
+                    # Calculate equilibrium distribution
+                    fi = weights[i] * density * (1 + v_proj / (speed_of_sound ** 2))
+                    f.append(fi)
+                
+                # Streaming step
+                for i in range(1, len(links)):  # Skip rest particle (index 0)
+                    fi = f[i]
+                    # Handle arbitrary velocity vectors by rolling multiple times if needed
+                    for dim, shift in enumerate(links[i]):
+                        if shift != 0:  # Only roll if there's movement in this direction
+                            # Get number of cells to shift (supports vectors like [2,0] or [-2,1])
+                            shift_amount = shift
+                            # For 1D case, only use axis 0. For 2D, use appropriate axis
+                            axis = 0 if dim == 0 else (1 if len(density.shape) > 1 else 0)
+                            # Roll the distribution the required number of times
+                            fi = np.roll(fi, shift_amount, axis=axis)
+                    f[i] = fi
+                
+                # Update density field
+                density = np.sum(f, axis=0)
+                
+                # Save current state
+                writer.writerow(density.flatten(order='F'))
+                
+            current_iterations += iterations
+    
+    print(f"Classical simulation complete. Results saved to {filename}")
+
+def save_rmse_comparison(file1: str, file2: str, dimensions: tuple[int, ...], 
+                        output_path: str = None, 
+                        labels: tuple[str, str] = ("Simulation 1", "Simulation 2")) -> None:
+    """Save a plot showing RMSE evolution between two simulations.
+    
+    Args:
+        file1: Path to first simulation CSV file
+        file2: Path to second simulation CSV file
+        dimensions: Tuple of dimensions for reshaping the data
+        output_path: Path to save the figure (default: experiments/figures/rmse_{timestamp}.png)
+        labels: Tuple of labels for the two simulations
+    """
+    # Read both CSV files
+    df1 = pd.read_csv(file1, header=None)
+    df2 = pd.read_csv(file2, header=None)
+    
+    if len(df1) != len(df2):
+        raise ValueError(f"Files have different number of iterations: {len(df1)} vs {len(df2)}")
+    
+    # Compute RMSE for each iteration
+    rmse_values = []
+    iterations = list(range(len(df1)))
+    
+    for i in range(len(df1)):
+        frame1 = df1.iloc[i].values.reshape(dimensions, order='F')
+        frame2 = df2.iloc[i].values.reshape(dimensions, order='F')
+        rmse = np.sqrt(np.mean((frame1 - frame2)**2))
+        rmse_values.append(rmse)
+    
+    # Create the figure
+    plt.figure(figsize=(10, 6))
+    plt.plot(iterations, rmse_values, 'b-', linewidth=2)
+    plt.grid(True)
+    plt.xlabel('Iteration')
+    plt.ylabel('RMSE')
+    plt.title(f'RMSE Evolution: {labels[0]} vs {labels[1]}')
+    
+    # Add statistics as text box
+    stats_text = f"Mean RMSE: {np.mean(rmse_values):.6f}\n"
+    stats_text += f"Max RMSE: {np.max(rmse_values):.6f}\n"
+    stats_text += f"Min RMSE: {np.min(rmse_values):.6f}"
+    plt.text(0.02, 0.98, stats_text,
+             transform=plt.gca().transAxes,
+             verticalalignment='top',
+             bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
+    # Save the figure
+    if output_path is None:
+        os.makedirs("experiments/figures", exist_ok=True)
+        output_path = f"experiments/figures/rmse_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"RMSE comparison saved to {output_path}")
