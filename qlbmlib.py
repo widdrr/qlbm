@@ -371,7 +371,7 @@ def simulate_flow_classical(initial_density: NDArray[np.float64],
     print(f"Classical simulation complete. Results saved to {filename}")
 
 def save_rmse_comparison(file1: str, file2: str, dimensions: tuple[int, ...], 
-                        output_path: str = None, 
+                        output_path: str, 
                         labels: tuple[str, str] = ("Simulation 1", "Simulation 2")) -> None:
     """Save a plot showing RMSE evolution between two simulations.
     
@@ -394,8 +394,8 @@ def save_rmse_comparison(file1: str, file2: str, dimensions: tuple[int, ...],
     iterations = list(range(len(df1)))
     
     for i in range(len(df1)):
-        frame1 = df1.iloc[i].values.reshape(dimensions, order='F')
-        frame2 = df2.iloc[i].values.reshape(dimensions, order='F')
+        frame1 = df1.iloc[i].to_numpy().reshape(dimensions, order='F')
+        frame2 = df2.iloc[i].to_numpy().reshape(dimensions, order='F')
         rmse = np.sqrt(np.mean((frame1 - frame2)**2))
         rmse_values.append(rmse)
     
