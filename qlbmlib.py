@@ -239,7 +239,6 @@ def create_circuit(density: NDArray[np.float64],
     recover_quantity = recover_quantity_classical_macros
     if enable_quantum_macros:
         qc.append(macros(link_qubits), list(range(site_qubits, state.num_qubits)))
-        qc.barrier()
         recover_quantity = recover_quantity_quantum_macros
 
     return (qc, recover_quantity)
