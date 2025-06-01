@@ -353,10 +353,8 @@ def simulate_flow_classical(initial_density: NDArray[np.float64],
                         if shift != 0:  # Only roll if there's movement in this direction
                             # Get number of cells to shift (supports vectors like [2,0] or [-2,1])
                             shift_amount = shift
-                            # For 1D case, only use axis 0. For 2D, use appropriate axis
-                            axis = 0 if dim == 0 else (1 if len(density.shape) > 1 else 0)
                             # Roll the distribution the required number of times
-                            fi = np.roll(fi, shift_amount, axis=axis)
+                            fi = np.roll(fi, shift_amount, axis=dim)
                     f[i] = fi
                 
                 # Update density field
@@ -405,15 +403,6 @@ def save_rmse_comparison(file1: str, file2: str, dimensions: tuple[int, ...],
     plt.xlabel('Iteration')
     plt.ylabel('RMSE')
     plt.title(f'RMSE Evolution: {labels[0]} vs {labels[1]}')
-    
-    # Add statistics as text box
-    stats_text = f"Mean RMSE: {np.mean(rmse_values):.6f}\n"
-    stats_text += f"Max RMSE: {np.max(rmse_values):.6f}\n"
-    stats_text += f"Min RMSE: {np.min(rmse_values):.6f}"
-    plt.text(0.02, 0.98, stats_text,
-             transform=plt.gca().transAxes,
-             verticalalignment='top',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
     
     # Save the figure
     if output_path is None:
