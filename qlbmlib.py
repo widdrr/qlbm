@@ -111,8 +111,16 @@ def get_renorm_coeff(num_velocities: int) -> NDArray[np.float64]:
     return coeffs
 
 def get_collision_diagonal(link_qubits: int, links: list[list[int]], weights: list[float], velocity_field: NDArray[np.float64], speed_of_sound: np.float64):
-    num_links = len(links)
+    normalized_links = []
+    for link in links:
+        link_vector = np.array(link)
+        link_norm = np.linalg.norm(link_vector)
+        if link_norm > 0:  # Skip normalization for rest particle
+            link_vector = link_vector / link_norm
+        normalized_links.append(link_vector.tolist())
     
+    num_links = len(links)
+
     dimension = list(velocity_field.shape)[0]
     velocity_field = velocity_field.reshape(dimension, -1, order='F')
     field_size = len(velocity_field[0])
@@ -120,7 +128,7 @@ def get_collision_diagonal(link_qubits: int, links: list[list[int]], weights: li
     max_links = 2**link_qubits
     
     blocks = []
-    for i, link in enumerate(links):
+    for i, link in enumerate(normalized_links):
         link_velocity = np.sum([(link[d]*velocity_field[d]) for d in range(dimension)], axis=0)
         block = weights[i] * (1 + link_velocity / (speed_of_sound ** 2))
         blocks.append(block)
@@ -330,14 +338,18 @@ def simulate_flow_classical(initial_density: NDArray[np.float64],
             # Evolution loop
             for t in range(iterations):
                 print(f"Classical Iteration {current_iterations + t + 1}/{total_iterations}")
-                
                 # Calculate equilibrium distributions
                 f = []
                 for i in range(len(links)):
-                    # Project velocity onto lattice direction
-                    # Reshape velocity field components back to grid shape for correct multiplication
+                    # Normalize link vector
+                    link_vector = np.array(links[i])
+                    link_norm = np.linalg.norm(link_vector)
+                    if link_norm > 0:  # Skip normalization for rest particle
+                        link_vector = link_vector / link_norm
+                    
+                    # Project velocity onto normalized lattice direction
                     v_proj = np.sum([
-                        links[i][d] * velocity_field[d]
+                        link_vector[d] * velocity_field[d]
                         for d in range(dimension)
                     ], axis=0)
                     
@@ -369,14 +381,14 @@ def simulate_flow_classical(initial_density: NDArray[np.float64],
 
 def save_rmse_comparison(file1: str, file2: str, dimensions: tuple[int, ...], 
                         output_path: str, 
-                        labels: tuple[str, str] = ("Simulation 1", "Simulation 2")) -> None:
+                        labels: tuple[str, str] = ("Quantum", "Classical")) -> None:
     """Save a plot showing RMSE evolution between two simulations.
     
     Args:
         file1: Path to first simulation CSV file
         file2: Path to second simulation CSV file
         dimensions: Tuple of dimensions for reshaping the data
-        output_path: Path to save the figure (default: experiments/figures/rmse_{timestamp}.png)
+        output_path: Path to save the figure
         labels: Tuple of labels for the two simulations
     """
     # Read both CSV files
@@ -386,23 +398,27 @@ def save_rmse_comparison(file1: str, file2: str, dimensions: tuple[int, ...],
     if len(df1) != len(df2):
         raise ValueError(f"Files have different number of iterations: {len(df1)} vs {len(df2)}")
     
-    # Compute RMSE for each iteration
     rmse_values = []
     iterations = list(range(len(df1)))
     
     for i in range(len(df1)):
         frame1 = df1.iloc[i].to_numpy().reshape(dimensions, order='F')
         frame2 = df2.iloc[i].to_numpy().reshape(dimensions, order='F')
+        
+        # Calculate regular RMSE
         rmse = np.sqrt(np.mean((frame1 - frame2)**2))
         rmse_values.append(rmse)
+        
     
-    # Create the figure
+       # Create the figure
     plt.figure(figsize=(10, 6))
     plt.plot(iterations, rmse_values, 'b-', linewidth=2)
     plt.grid(True)
     plt.xlabel('Iteration')
     plt.ylabel('RMSE')
     plt.title(f'RMSE Evolution: {labels[0]} vs {labels[1]}')
+    
+    plt.tight_layout()
     
     # Save the figure
     if output_path is None:
