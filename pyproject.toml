@@ -1,0 +1,28 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qlbm"
+version = "0.1.0"
+description = "Quantum lattice Boltzmann method utilities and experiments"
+readme = "README.md"
+authors = [ { name = "widdrr" } ]
+keywords = ["quantum", "lattice-boltzmann", "qlbm"]
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy>=1.24.0",
+    "qiskit>=1.0.0",
+    "qiskit-aer>=0.12.0",
+    "matplotlib>=3.7.0",
+    "pandas>=2.0.0",
+    "ipykernel>=6.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/widdrr/qlbm"
+
