@@ -21,8 +21,14 @@ dependencies = [
     "matplotlib>=3.7.0",
     "pandas>=2.0.0",
     "ipykernel>=6.0",
+    "seaborn>=0.13.2",
+    "ipympl>=0.9.8",
+    "pylatexenc>=2.10",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/widdrr/qlbm"
+
+[tool.setuptools]
+py-modules = ["qlbmlib"]  # Explicitly list the single-file module
 

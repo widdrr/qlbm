@@ -76,13 +76,12 @@ def recover_quantity_classical_macros(state: Statevector, site_dims: list[int], 
         start_idx = i * num_sites
         end_idx = (i + 1) * num_sites
         link_vals = state_array[start_idx:end_idx]
-        print(f"Link {i}: {link_vals}")
         
         # Reshape and add to total density
         density += link_vals.reshape(site_dims, order='F')
     
     density = np.real(density)
-    return original_norm * density
+    return original_norm * density / np.linalg.norm(density)
 
 def recover_quantity_quantum_macros(state: Statevector, site_dims: list[int], num_links: int, original_norm: np.float64) -> NDArray[np.float64]:
     # Get the statevector as numpy array
@@ -186,7 +185,6 @@ def propagation(site_qubits: list[int], link_qubits: int, links: list[list[int]]
     num_qubits = tot_site_qubits + link_qubits
     qc = QuantumCircuit(num_qubits)
     
-    targets = [list(range(sum(site_qubits[:i]), sum(site_qubits[:i+1]))) for i in range(len(site_qubits))]
     targets = [list(range(sum(site_qubits[:i]), sum(site_qubits[:i+1]))) for i in range(len(site_qubits))]
     if len(links) == 1:
         for j, dir in enumerate(links[0]):
