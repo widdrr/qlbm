@@ -309,13 +309,15 @@ def simulate_flow(initial_density: NDArray[np.float64],
             current_iterations += iterations
 
 def simulate_flow_classical(initial_density: NDArray[np.float64],
-                        configs: list[tuple[int, NDArray[np.float64], list[list[int]], list[float], float]],
+                        configs: list[tuple[int, NDArray[np.float64], list[list[int]], list[float], float, NDArray[np.float64]]],
                         filename: str) -> None:
     """Simulate classical Lattice Boltzmann Method flow.
     
     Args:
         initial_density: Initial density distribution
-        configs: List of tuples containing (iterations, velocity_field, links, weights, speed_of_sound)
+        configs: List of tuples containing (iterations, velocity_field, links, weights, speed_of_sound, boundary_conditions)
+                 boundary_conditions: Array of shape (*spatial_dims, num_velocities, num_velocities) containing
+                                     transformation matrices for each lattice site
         filename: Path to save the CSV file with simulation results
     """
     # Convert links and weights to numpy arrays for easier handling
@@ -328,10 +330,11 @@ def simulate_flow_classical(initial_density: NDArray[np.float64],
         
         current_iterations = 0
         for config in configs:
-            iterations, velocity_field, links, weights, speed_of_sound = config
+            iterations, velocity_field, links, weights, speed_of_sound, boundary_conditions = config
             print(f"Classical simulation: iterations {current_iterations}-{current_iterations + iterations}/{total_iterations}")
             
             dimension = list(velocity_field.shape)[0]
+            num_velocities = len(links)
             
             # Evolution loop
             for t in range(iterations):
@@ -355,8 +358,26 @@ def simulate_flow_classical(initial_density: NDArray[np.float64],
                     fi = weights[i] * density * (1 + v_proj / (speed_of_sound ** 2))
                     f.append(fi)
                 
+                # Apply boundary conditions BEFORE streaming (linear transformation of velocity distributions at each site)
+                # f is a list of arrays, each of shape (*spatial_dims)
+                # We need to transform them into a tensor of shape (*spatial_dims, num_velocities)
+                # then apply the boundary condition matrices
+                f_stacked = np.stack(f, axis=-1)  # Shape: (*spatial_dims, num_velocities)
+                
+                # Apply the boundary condition transformation at each site
+                # boundary_conditions has shape (*spatial_dims, num_velocities, num_velocities)
+                # We want to compute: f_new[site, j] = sum_i(boundary_conditions[site, j, i] * f_old[site, i])
+                f_transformed = np.einsum('...ji,...i->...j', boundary_conditions, f_stacked)
+                
+                # Unstack back into list of arrays
+                f = [f_transformed[..., i] for i in range(num_velocities)]
+                
                 # Streaming step
-                for i in range(1, len(links)):  # Skip rest particle (index 0)
+                for i in range(len(links)):
+                    # Skip if this is a rest particle (all velocity components are zero)
+                    if all(v == 0 for v in links[i]):
+                        continue
+                    
                     fi = f[i]
                     # Handle arbitrary velocity vectors by rolling multiple times if needed
                     for dim, shift in enumerate(links[i]):
