@@ -2,24 +2,57 @@ import numpy as np
 from qiskit.quantum_info import Statevector
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Gate
-from qiskit.circuit.library import HGate, DiagonalGate
+from qiskit.circuit.library import HGate, DiagonalGate, UnitaryGate
 from numpy.typing import NDArray
 from qiskit_aer import StatevectorSimulator
-from typing import Callable
+from typing import Callable, Optional
 import csv
 import time
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.sparse import lil_matrix
+from scipy.linalg import svd
+from scipy.linalg import svd
+
+def decompose_matrix_svd(A: NDArray[np.float64]) -> tuple[NDArray[np.complex128], NDArray[np.complex128], float]:
+    """
+    Decomposes ANY square matrix A into a linear combination of two unitaries, 
+    A = alpha * U1 + alpha * U2, using the SVD method.
+    """
+    A = A / np.linalg.norm(A, ord=2)
+    
+    # 2. Perform SVD: A = V @ Sigma_diag @ W_dagger
+    # U, s, Vh correspond to V, Sigma_diag, W_dagger respectively
+    V, singular_values, W_dagger = svd(A)
+    
+    N = A.shape[0]
+    I = np.eye(N)
+    
+    # 3. Define the normalized singular values (sigma_prime)
+    sigma_prime = singular_values
+    
+    # 4. Define the diagonal unitary matrix Lambda (element-wise)
+    
+    # Ensure no calculation under sqrt(1 - (sigma_prime)^2) results in 
+    # a negative number due to precision errors. Clip to 1.0.
+    argument = 1.0 - np.minimum(sigma_prime**2, 1.0)
+    
+    # Lambda_diag is the diagonal of the matrix Lambda
+    Lambda_diag = sigma_prime + 1j * np.sqrt(argument)
+    
+    # Construct the full diagonal matrix Lambda
+    Lambda = np.diag(Lambda_diag)
+    
+    # 5. Construct the unitaries U1 and U2
+    # U1 = V @ Lambda @ W_dagger
+    U1 = V @ Lambda @ W_dagger
+    
+    # U2 = V @ Lambda_dagger @ W_dagger
+    U2 = V @ Lambda.conj().T @ W_dagger
+    
+    return U1, U2
 
 def write_array_to_csv(array: NDArray[np.float64], filename: str, mode: str = 'w') -> None:
-    """Write a numpy array to a CSV file.
-    
-    Args:
-        array: Numpy array to write to file
-        filename: Path to the CSV file
-        mode: File opening mode ('w' for write/overwrite, 'a' for append)
-    """
-    # Flatten array in Fortran order to match simulation data format
     flat_array = array.flatten(order='F')
     
     with open(filename, mode, newline='') as file:
@@ -40,6 +73,38 @@ def encode(variable: NDArray[np.float64], link_qubits: int) -> Statevector:
 
     
     return state.expand(ancilla)
+
+def bc_config_to_matrix(bc: NDArray[np.float64], 
+                        grid_size: int, 
+                        num_velocities: int) -> NDArray[np.float64]:
+    actual_num_velocities = bc.shape[1]
+    total_size = grid_size * num_velocities
+    bc_matrix = lil_matrix((total_size, total_size))
+    
+    for site in range(grid_size):
+        for j in range(actual_num_velocities):
+            for i in range(actual_num_velocities):
+                if bc[site, j, i] != 0:
+                    row = j * grid_size + site
+                    col = i * grid_size + site
+                    bc_matrix[row, col] = bc[site, j, i]
+        
+        # Pad with identity for extra velocities
+        for v in range(actual_num_velocities, num_velocities):
+            idx = v * grid_size + site
+            bc_matrix[idx, idx] = 1.0
+    
+    return bc_matrix.toarray()
+
+def combine_collision_bc_matrices(collision_diagonal: NDArray[np.float64],
+                                 bc_matrix: Optional[NDArray[np.float64]]) -> NDArray[np.float64]:
+    if bc_matrix is None:
+        return collision_diagonal
+    
+    collision_matrix_full = np.diag(collision_diagonal)
+    combined = bc_matrix @ collision_matrix_full
+    
+    return combined
 
 def get_ctrl_qubits(binary_str: str)-> tuple[list[int], int, str]:
     length = len(binary_str)
@@ -147,13 +212,26 @@ def collision_nonuniform(site_qubits: int, link_qubits: int, collision_matrix: N
     ancilla = num_qubits - 1
     target_qubits = list(range(ancilla))
 
-    unitary_1 = list(collision_matrix + 1.j*np.sqrt(1 - np.square(collision_matrix)))
-    unitary_2 = list(collision_matrix - 1.j*np.sqrt(1 - np.square(collision_matrix)))
+    if collision_matrix.ndim == 1:
+        diagonal = collision_matrix
+        unitary_1 = list(diagonal + 1.j*np.sqrt(1 - np.square(diagonal)))
+        unitary_2 = list(diagonal - 1.j*np.sqrt(1 - np.square(diagonal)))
 
-    qc.h(ancilla)
-    qc.append(DiagonalGate(unitary_1).control(ctrl_state='0'), [ancilla] + target_qubits)
-    qc.append(DiagonalGate(unitary_2).control(ctrl_state='1'), [ancilla] + target_qubits)
-    qc.h(ancilla)
+        qc.h(ancilla)
+        qc.append(DiagonalGate(unitary_1).control(ctrl_state='0'), [ancilla] + target_qubits)
+        qc.append(DiagonalGate(unitary_2).control(ctrl_state='1'), [ancilla] + target_qubits)
+        qc.h(ancilla)
+    else:
+        print("Using SVD decomposition for non-diagonal collision matrix")
+        # Use SVD decomposition for boundary condition matrices
+        U1, U2 = decompose_matrix_svd(collision_matrix)
+        print("Decomposition complete")
+
+        qc.h(ancilla)
+        qc.append(UnitaryGate(U1).control(ctrl_state='0'), [ancilla] + target_qubits)
+        qc.append(UnitaryGate(U2).control(ctrl_state='1'), [ancilla] + target_qubits)
+        qc.h(ancilla)
+        print("Added controlled unitaries to circuit")
 
     return qc
 
@@ -228,18 +306,22 @@ def create_circuit(density: NDArray[np.float64],
                    link_qubits: int,
                    num_links: int,
                    links: list[list[int]],
-                   collision_matrix: NDArray[np.float64], 
-                   enable_quantum_macros: bool)-> tuple[QuantumCircuit, Callable]:
+                   collision_matrix: NDArray[np.float64],
+                   bc_matrix: Optional[NDArray[np.float64]] = None,
+                   enable_quantum_macros: bool = False)-> tuple[QuantumCircuit, Callable]:
     
     # Initialize state
     state = encode(density, link_qubits)
     if state.num_qubits is None:
         raise ValueError("Failed to initialize quantum state")
 
+    # Combine collision and BC matrices if BC is provided
+    combined_matrix = combine_collision_bc_matrices(collision_matrix, bc_matrix)
+
     qc = QuantumCircuit(state.num_qubits)
     qc.initialize(state)
     qc.append(encode_links(link_qubits, num_links), list(range(site_qubits, state.num_qubits -1)))
-    qc.append(collision_nonuniform(site_qubits, link_qubits, collision_matrix), list(range(state.num_qubits)))
+    qc.append(collision_nonuniform(site_qubits, link_qubits, combined_matrix), list(range(state.num_qubits)))
     qc.append(propagation(site_qubits_per_dim, link_qubits, links), list(range(0, state.num_qubits - 1)))
 
     recover_quantity = recover_quantity_classical_macros
@@ -250,7 +332,7 @@ def create_circuit(density: NDArray[np.float64],
     return (qc, recover_quantity)
 
 def simulate_flow(initial_density: NDArray[np.float64],
-                  configs: list[tuple[int, NDArray[np.float64], list[list[int]], list[float], np.float64]],
+                  configs: list[tuple[int, NDArray[np.float64], list[list[int]], list[float], np.float64, Optional[NDArray[np.float64]]]],
                   filename: str,
                   enable_quantum_macros: bool) -> None:
 
@@ -264,35 +346,119 @@ def simulate_flow(initial_density: NDArray[np.float64],
 
     total_iterations = np.sum(list(map(lambda c: c[0], configs)))
 
+    print(f"Pre-building all circuit components for {len(configs)} configuration(s)...")
+    
+    # Pre-build all circuit components for all configurations
+    component_cache = {}  # Maps config_hash -> (encode_links, collision, propagation, macros, metadata)
+    config_metadata = []  # List of (config_index, iterations, config_hash, num_links, link_qubits, recover_fn)
+    
+    for config_idx, config in enumerate(configs):
+        (iterations, velocity_field, links, weights, speed_of_sound, boundary_conditions) = config
+        
+        num_links = len(links)
+        link_qubits = int(np.ceil(np.log2(num_links)))
+        collision_matrix = get_collision_diagonal(link_qubits, links, weights, velocity_field, speed_of_sound)
+        
+        # Convert BC configuration to matrix if provided
+        bc_matrix = None
+        if boundary_conditions is not None:
+            grid_size = np.prod(sites_per_dim)
+            padded_num_velocities = 2**link_qubits
+            bc_matrix = bc_config_to_matrix(boundary_conditions, grid_size, padded_num_velocities)
+        
+        # Create a hash of the configuration
+        combined_matrix = combine_collision_bc_matrices(collision_matrix, bc_matrix)
+        config_parts = [
+            combined_matrix.tobytes(),
+            str(links).encode(),
+            str(enable_quantum_macros).encode()
+        ]
+        config_hash = hash(tuple(config_parts))
+        
+        # Set recovery function
+        recover_quantity = recover_quantity_quantum_macros if enable_quantum_macros else recover_quantity_classical_macros
+        
+        # Store metadata for this config
+        config_metadata.append((config_idx, iterations, config_hash, num_links, link_qubits, recover_quantity))
+        
+        # Build components if not already cached
+        if config_hash not in component_cache:
+            print(f"  Building components for configuration {config_idx + 1}/{len(configs)}...")
+            
+            num_qubits = site_qubits + link_qubits + 1
+            
+            # Encode links gate
+            encode_links_gate = encode_links(link_qubits, num_links).to_gate(label='encode_links')
+            qc_temp = QuantumCircuit(num_qubits)
+            qc_temp.append(encode_links_gate, list(range(site_qubits, num_qubits - 1)))
+            cached_encode_links = transpile(qc_temp, simulator)
+            
+            # Collision gate
+            collision_gate = collision_nonuniform(site_qubits, link_qubits, combined_matrix).to_gate(label='collision')
+            qc_temp = QuantumCircuit(num_qubits)
+            qc_temp.append(collision_gate, list(range(num_qubits)))
+            cached_collision = transpile(qc_temp, simulator)
+            
+            # Propagation gate
+            propagation_gate = propagation(site_qubits_per_dim, link_qubits, links).to_gate(label='propagation')
+            qc_temp = QuantumCircuit(num_qubits)
+            qc_temp.append(propagation_gate, list(range(0, num_qubits - 1)))
+            cached_propagation = transpile(qc_temp, simulator)
+            
+            # Macros gate (if enabled)
+            if enable_quantum_macros:
+                macros_gate = macros(link_qubits).to_gate(label='macros')
+                qc_temp = QuantumCircuit(num_qubits)
+                qc_temp.append(macros_gate, list(range(site_qubits, num_qubits)))
+                cached_macros = transpile(qc_temp, simulator)
+            else:
+                cached_macros = None
+            
+            component_cache[config_hash] = (cached_encode_links, cached_collision, cached_propagation, cached_macros)
+            print(f"    Components built and transpiled.")
+        else:
+            print(f"  Configuration {config_idx + 1}/{len(configs)} reuses components from previous configuration.")
+    
+    print(f"Pre-building complete. {len(component_cache)} unique component set(s) created.")
+    print("Starting simulation...")
+    
     current_iterations = 0
     with open(filename, 'a', newline='') as file:
         writer = csv.writer(file)
         # Write initial state as first row
         writer.writerow(initial_density.flatten(order='F'))
         
-        for config in configs:
-            (iterations, velocity_field, links, weights, speed_of_sound) = config
-            print(f"Circuit configuration: will run iterations {current_iterations}-{current_iterations + iterations}/{total_iterations} with this configuration")
-
-            num_links = len(links)
-            link_qubits = int(np.ceil(np.log2(num_links)))
-            collision_matrix = get_collision_diagonal(link_qubits, links, weights, velocity_field, speed_of_sound)
+        for config_idx, iterations, config_hash, num_links, link_qubits, recover_quantity in config_metadata:
+            print(f"\nConfiguration {config_idx + 1}/{len(configs)}: iterations {current_iterations + 1}-{current_iterations + iterations}/{total_iterations}")
+            
+            # Get cached components
+            cached_encode_links, cached_collision, cached_propagation, cached_macros = component_cache[config_hash]
 
             # Evolution loop
             for i in range(current_iterations, current_iterations + iterations):
                 # Evolve state
                 print(f"Iteration {i+1} running...")
                 
-                compile_start = time.time()
-                qc, recover_quantity = create_circuit(initial_density, site_qubits, site_qubits_per_dim, link_qubits, num_links, links, collision_matrix, enable_quantum_macros)
-                qc = transpile(qc, simulator)
-                compile_time = time.time() - compile_start
-
-                # Measure execution time
-                execute_start = time.time()
+                # Encode state (must be done each iteration as density changes)
+                state = encode(initial_density, link_qubits)
+                if state.num_qubits is None:
+                    raise ValueError("Failed to initialize quantum state")
+                
+                # Build circuit with cached components
+                num_qubits = state.num_qubits
+                qc = QuantumCircuit(num_qubits)
+                qc.initialize(state)
+                
+                # Compose with cached transpiled components
+                qc.compose(cached_encode_links, inplace=True)
+                qc.compose(cached_collision, inplace=True)
+                qc.compose(cached_propagation, inplace=True)
+                if cached_macros is not None:
+                    qc.compose(cached_macros, inplace=True)
+                
+                # Run simulation
                 result = simulator.run(qc).result()
                 state = result.get_statevector()
-                execute_time = time.time() - execute_start
                 
                 # Recover density and normalize
                 initial_density = recover_quantity(state, sites_per_dim, num_links, norm)
@@ -300,12 +466,6 @@ def simulate_flow(initial_density: NDArray[np.float64],
                 
                 # Write current state to CSV
                 writer.writerow(initial_density.flatten(order='F'))
-                
-                # Print detailed timing information
-                print(f"Iteration {i+1}/{total_iterations}:")
-                print(f"  Compilation: {compile_time:.3f} seconds")
-                print(f"  Execution: {execute_time:.3f} seconds")
-                print(f"  Total: {compile_time + execute_time:.3f} seconds")
             current_iterations += iterations
 
 def simulate_flow_classical(initial_density: NDArray[np.float64],
