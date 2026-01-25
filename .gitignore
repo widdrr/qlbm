@@ -3,3 +3,4 @@ experiments/
 papers/
 *.egg-info/
 *.lock
+temp-material/
