@@ -30,5 +30,5 @@ dependencies = [
 "Homepage" = "https://github.com/widdrr/qlbm"
 
 [tool.setuptools]
-py-modules = ["qlbmlib"]  # Explicitly list the single-file module
+packages = ["qlbm"]
 
