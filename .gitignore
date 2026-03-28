@@ -1,7 +1,6 @@
 experiments/
 *.pyc
 *.egg-info/
-*.lock
 temp-material/
 *.pdf
 .direnv/
