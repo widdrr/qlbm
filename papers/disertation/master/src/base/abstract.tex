@@ -1,0 +1,8 @@
+This thesis presents a fully generic and parameterized implementation of the Quantum Lattice Boltzmann Method for the advection-diffusion equation.
+The algorithm is based on existing work with slight modifications to the initialization procedure, but unlike all other existing implementations, ours is designed to be flexible and can handle any number of dimensions and arbitrary sets of link velocities, including non-standard sets.
+We validate our work with various experiments of increasing complexity, demonstrating that it matches classical simulations within a reasonable error margin.
+
+Additionally, we present a method for incorporating local, linear, norm-preserving boundary conditions into the Quantum Lattice Boltzmann Method.
+The method makes use of Singular Value Decomposition and Linear Combination of Unitaries to implement them as quantum circuits.
+By merging the boundary and collision operators before the streaming step, we avoid halving the success probability per iteration.
+We validate this approach with a 1D advection-diffusion simulation of solid wall boundaries.

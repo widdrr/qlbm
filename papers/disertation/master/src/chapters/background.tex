@@ -1,0 +1,339 @@
+\chapter{Background and Related Work}
+\label{chapter:background}
+
+\section{Computational Fluid Dynamics}
+\label{sec:cfd}
+
+Before simulating fluid flows, one has to mathematically model them. The choice of model mostly depends on the scale of the flow and the properties of the fluid.
+
+The vast majority of CFD simulations are for macroscopic flows where the fluid can be treated as a \textbf{continuum}.
+Fluid flows modeled as a continuum are governed by the \textbf{Navier-Stokes equations}. The equations take different forms depending on the specific properties of the fluid, such as compressibility, viscosity or heat transfer.
+For example, the momentum equation written in conservation form \footnote{The conservation form of an equation emphasizes that a quantity is conserved. In the presented case the equation includes conservation of mass.} for an incompressible fluid is:
+\begin{displaymath}
+    \label{eq:ns}
+    \frac{\partial}{\partial t} \rho \pmb{u} + \nabla \cdot (\rho \pmb{u} \pmb{u^T}) = -\nabla p + \nabla \cdot \pmb{\tau} + \rho \pmb{a}
+\end{displaymath}
+where $\rho$ is the fluid density, $\pmb{u}$ is the velocity, $p$ is the pressure, $\pmb{\tau}$ is the viscous stress tensor and $\pmb{a}$ represents body accelerations (external influences).
+
+
+Since they are non-linear partial differential equations (PDE), numerical methods are required to solve them for simulations.
+The basic approach is to discretize the equations and iteratively solve them in time steps.
+The most common discretization methods are the \emph{Finite Volume Method} (FVM) and \emph{Finite Element Method} (FEM) \cite{blazek2015computational}.
+
+Going down, fluids at intermediate scales (mesoscale) are best described by statistical mechanics. Instead of a continuum, the fluid is comprised of \textbf{statistical ensembles of particles}.
+The probability density of these particles evolves according to the \textbf{Boltzmann equation}.
+Using the common BGK approximation for particle collisions, the equation is:
+\begin{displaymath}
+    \label{eq:boltzmann}
+    \frac{\partial f}{\partial t} + \frac{\pmb{p}}{m} \cdot \nabla f + \pmb{F} \cdot \frac{\partial f}{\partial p} = \frac{f^{eq} - f}{\tau}
+\end{displaymath}
+where $f$ is the particle distribution function, $\pmb{p}$ is the momentum, $m$ is the mass, $\pmb{F}$ is the body (external) force, $f^{eq}$ is the equilibrium distribution function and $\tau$ is the relaxation time.
+
+
+One of the most widespread methods for mesoscale flows is the \textbf{Lattice Boltzmann Method} (LBM) \cite{chen1998lattice}.
+LBMs discretize the space into a lattice and model the evolution of fluid density on each lattice site.
+Velocity is also discretized into a set of allowed directions a particle can move in.
+The common notation used to denote discretization schemas is the DnQm notation, where $n$ is the number of dimensions and $m$ is the number of discrete velocities.
+\begin{figure}[t!]
+
+    \tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt
+
+    \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+    %uncomment if require: \path (0,300); %set diagram left start at 0, and has height of 300
+
+    %Straight Lines [id:da8888780735517332]
+    \draw    (373.87,278.53) ;
+    %Shape: Grid [id:dp03877998282701478]
+    \draw  [draw opacity=0] (190,69) -- (511,69) -- (511,230) -- (190,230) -- cycle ; \draw  [color={rgb, 255:red, 155; green, 155; blue, 155 }  ,draw opacity=1 ] (190,69) -- (190,230)(270,69) -- (270,230)(350,69) -- (350,230)(430,69) -- (430,230)(510,69) -- (510,230) ; \draw  [color={rgb, 255:red, 155; green, 155; blue, 155 }  ,draw opacity=1 ] (190,69) -- (511,69)(190,149) -- (511,149)(190,229) -- (511,229) ; \draw  [color={rgb, 255:red, 155; green, 155; blue, 155 }  ,draw opacity=1 ]  ;
+    %Shape: Circle [id:dp5022874038415199]
+    \draw  [fill={rgb, 255:red, 255; green, 255; blue, 255 }  ,fill opacity=1 ] (325,149) .. controls (325,135.19) and (336.19,124) .. (350,124) .. controls (363.81,124) and (375,135.19) .. (375,149) .. controls (375,162.81) and (363.81,174) .. (350,174) .. controls (336.19,174) and (325,162.81) .. (325,149) -- cycle ;
+    %Straight Lines [id:da04736893300326139]
+    \draw    (350,174) -- (350,212) ;
+    \draw [shift={(350,214)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+    %Shape: Boxed Line [id:dp021303205536981507]
+    \draw    (325,149) -- (287,149) ;
+    \draw [shift={(285,149)}, rotate = 360] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+    %Shape: Boxed Line [id:dp539113257220927]
+    \draw    (350,124) -- (350,86) ;
+    \draw [shift={(350,84)}, rotate = 90] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+    %Shape: Boxed Line [id:dp44341141245264937]
+    \draw    (375,149) -- (413,149) ;
+    \draw [shift={(415,149)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+    %Shape: Boxed Line [id:dp5984779454881499]
+    \draw    (333.28,166.72) -- (306.41,193.59) ;
+    \draw [shift={(305,195)}, rotate = 315] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+    %Shape: Boxed Line [id:dp16339365265718486]
+    \draw    (330,134) -- (303.13,107.13) ;
+    \draw [shift={(301.72,105.72)}, rotate = 45] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+    %Shape: Boxed Line [id:dp21948780896625064]
+    \draw    (370,134) -- (396.87,107.13) ;
+    \draw [shift={(398.28,105.72)}, rotate = 135] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+    %Shape: Boxed Line [id:dp05711106860687787]
+    \draw    (369.72,164.72) -- (396.59,191.59) ;
+    \draw [shift={(398,193)}, rotate = 225] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (12.02,-3.62) .. controls (7.65,-1.54) and (3.64,-0.33) .. (0,0) .. controls (3.64,0.33) and (7.65,1.54) .. (12.02,3.62)   ;
+
+    % Text Node
+    \draw (343,137.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{0}}$};
+    % Text Node
+    \draw (352,87.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{1}}$};
+    % Text Node
+    \draw (396,120.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{2}}$};
+    % Text Node
+    \draw (354,178.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{3}}$};
+    % Text Node
+    \draw (294,122.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{4}}$};
+    % Text Node
+    \draw (373,92.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{5}}$};
+    % Text Node
+    \draw (384,156.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{6}}$};
+    % Text Node
+    \draw (304,158.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{7}}$};
+    % Text Node
+    \draw (314,88.4) node [anchor=north west][inner sep=0.75pt]    {$\overrightarrow{e_{8}}$};
+
+
+    \end{tikzpicture}
+
+\caption{D2Q9: 2D lattice with 9 discrete velocities.}
+\label{fig:disc}
+\end{figure}
+
+There are two main steps in an iteration of an LBM:
+\begin{enumerate}
+    \item \textbf{Collision} - particles on each lattice site collide and redistribute along the discrete directions. Different collision operators can be used to model different behaviors.
+    \item \textbf{Streaming} - particles move to neighboring lattice sites according to their velocity.
+\end{enumerate}
+Despite being developed from a mesoscale perspective, LBMs can be used for large flows as well \cite{sharma2020current}.
+
+Lastly, microscopic scale flows and interactions are often modeled by individual particles obeying Newton's laws. The most common method for this is the Molecular Dynamics (MD) method \cite{koplik1989molecular}.
+Generally these are less associated with CFD and seldom mentioned in the surrounding discussions, excluding specialized contexts.
+We will not discuss them further in this paper but they are nonetheless an interesting subject.
+
+All things considered, we can identify two main categories of classical CFD methods:
+\begin{itemize}
+    \item \textbf{Continuum methods} - which solve the Navier-Stokes equations or some equivalent equations.
+    \item \textbf{Lattice methods} - which model fluids as collections of fictitious particles moving on a lattice.
+\end{itemize}
+
+\section{Quantum Computing Fundamentals}
+\label{sec:qc-basics}
+
+Traditional computing, when stripped of all abstraction and boiled down to its purest form is just applying specific operations (Gates) on units of information (Bits).
+A chain of gates is called a Circuit or Algorithm, depending on the context.
+
+While the fundamental principles involved are vastly different, Quantum Computing, in particular the Quantum Circuit formalism, shares this paradigm and has equivalent concepts.
+
+\todo{Finish Quantum Computing Fundamentals section}
+
+\paragraph*{Qubits}
+are the quantum counterpart for the bit, as the name suggests. Just like a bit it can have values of 0 or 1.
+Unlike a bit however, it is not restricted to these values alone. In fact, a qubit can be any linear combination with complex coefficients
+of these basis states. Mathematically it is described by a 2D vector with complex scalars.
+The only restriction on this vector is that it must be normalized.
+When a qubit is in such a linear combination it's known as being in Superposition.
+A system consisting of multiple qubits is described by a higher dimensional vector, of size 2num_qubits.
+
+\todo examples
+
+\paragraph*{Quantum Gates}
+are what is applied to Qubits in order to change their states and perform computation.
+Unlike classical gates, quantum gates can apply a wider range of transformations on the qubits.
+Mathematically a gate is described by a Linear Map (Matrix), with the one condition being it must be Unitary so as to keep the qubits normalized.
+
+Particularly interesting are multi-qubit gates that transform the system's statevector into one that can no longer be decomposed into individual qubit states.
+In other words, the qubits are no longer independent, they became entangled.
+
+\todo{examples, common gates, etc}
+
+
+\paragraph*{Measurement}
+is the one concept that does not exactly have a classical analogue.
+Despite qubits storing more information than bits in theory, that information is not directly accessible.
+When measuring a qubit that is in superposition, what we obtain is a base state at random.
+The probability of obtaining the state is equalt to the amplitude squared of the respective state in the qubit.
+
+Since the choice of basis is arbitrary in a hilbert space (i need to actually introduce this earlier), measurements can be done in any basis chosen, and
+what is considered a base state and what is a superposition is relative to the chosen measurement basis.
+
+Despite appearing to negate any potential benefits from qubits being higher dimensional than bits, by cleverly leveraging the properties of superposition and entanglement,
+we can create algorithms for certain problems that could run faster than a classical computer ever could.
+
+
+\todo{Describe measurement in computational basis, Born rule, state collapse, statevector simulation vs shots.}
+
+\section{Quantum Approaches to CFD}
+\label{sec:qcfd}
+
+Some of the earliest work in quantum algorithms for CFD was done by Yepez in the late 90s to early 2000s.
+He showed that the \textbf{Quantum Lattice Gas Automata} (QLGA), which had been developed for quantum multi-body problems \cite{boghosian1997gas}, could be used to model classical fluid flows \cite{yepez1998lattice}.
+He later proposed an algorithm for simulating the QLGA on a Type-II Quantum Computer\footnote{A Type-II Quantum Computer is a hybrid computer consisting of many small quantum computers that communicate classically \cite{yepez2001type}.} \cite{yepez2001lattice}.
+
+After these initial developments, there was a long period of little to no activity in the field.
+During this time, however, several important quantum algorithms were developed, such as the HHL algorithm for solving linear systems of equations \cite{harrow2009quantum} or various ordinary differential equations (ODE) solvers \cite{kacewicz2006almost,leyton2008quantum}.
+
+In recent years the field has been reinvigorated.
+Unlike the early work, newer research was more focused on using the aforementioned quantum algorithms to more efficiently solve the Navier-Stokes equations \cite{gaitan2020finding, jaksch2023variational}.
+The QLGA was not abandoned, however, and like its classical counterpart it evolved into the \textbf{Quantum Lattice Boltzmann Method} (QLBM) \cite{budinski2021quantum, itani2024quantum}.
+
+Mirroring the classical approaches, quantum algorithms for CFD also fall under the two categories of continuum and lattice methods.
+As discussed in the History subsection, the field started with lattice methods, later developing a trend towards continuum methods with a recent resurgence of lattice methods.
+Subsequently, we will discuss a couple of quantum algorithms for CFD, focusing on the ones most representative of their category.
+
+\paragraph*{Quantum Navier-Stokes Solver}
+In 2020 Gaitan published a paper on a quantum algorithm for solving the Navier-Stokes equations \cite{gaitan2020finding}.
+Despite being presented in the context of CFD, the author claims it has general applicability to any system of partial differential equations.
+The algorithm itself consists of two main parts:
+\begin{enumerate}
+    \item Discretizing the PDEs to a set of ODEs. Gaitan uses the Finite Difference Method (FDM) and briefly discusses exploring other methods in future work.
+    \item Solving the resulting ODEs using \textbf{Kacewicz's quantum algorithm} \cite{kacewicz2006almost}. The original paper claims the algorithm is almost optimal.
+\end{enumerate}
+Kacewicz's ODE algorithm is a hybrid algorithm that makes use of the \emph{Quantum Amplitude Estimation Algorithm} (QAEA) \cite{brassard2002quantum} to achieve a speedup over classical methods.
+
+To validate the algorithm, Gaitan uses it to simulate an inviscid compressible 1D flow through a convergent-divergent nozzle\footnote{This type of nozzle narrows and then widens. It is used in rocket engines and jet engines.}
+The simulations were performed using Qiskit \cite{qiskit2024} and showed great agreement with the exact analytical solution.
+
+To determine the performance gain, Gaitan performs a complexity analysis of the algorithm compared with both deterministic and random classical algorithms.
+The results show that the time complexity depends on the smoothness \footnote{Smoothness in this case refers to the Hölder class} of the function being solved. For smooth functions, all algorithms have the same complexity.
+For "rough" functions, however, the quantum algorithm shows a square root speedup over random classical algorithms and an exponential speedup over deterministic classical algorithms.
+
+The main drawback of the algorithm is the fact that it is hybrid. In particular it repeatedly uses the QAEA as a subroutine. The constant communication between the quantum and classical parts of the algorithm could be a bottleneck in practice.
+
+\paragraph*{Hydrodynamic Schrödinger Equation}
+While the vast majority of continuum methods are focused on the Navier-Stokes equations, they are not the only option available.
+In 2023, Yang and Meng proposed a model for fluid flows based on the \textbf{Schrödinger equation} \cite{meng2023quantum}.
+
+The \textbf{Madelung equations} are a set of equations that serve as an alternate formulation of the Schrödinger equation written in hydrodynamical form \cite{schonberg1954hydrodynamical}.
+The key idea behind this formulation is the similarity between some quantities of quantum and fluid mechanics.
+\begin{table}[ht!]
+    \caption{Similarities between quantum and fluid quantities.}
+    \label{tab:quantities}
+    \centering
+    \begin{tabular}{|c|c|c|}
+    \hline
+    & $\rho$ & $\pmb{J}=\rho \pmb{u}$ \\
+    \hline
+    Quantum Mechanics & Probability Density & Probability Current \\
+    \hline
+    Fluid Mechanics & Mass Density & Momentum \\
+    \hline
+    \end{tabular}
+\end{table}
+
+Since it is formulated in terms of hydrodynamical variables, we can imagine a fictitious fluid that obeys these equations. Because the Madelung equations are equivalent to the Schrödinger equation, they can more naturally be implemented on a quantum computer.
+
+The major problem, however, is that this fictitious fluid does not behave similarly enough to real fluids. In particular it lacks viscosity and vorticity.
+This is where Yang and Meng's contribution lies. They managed to generalize the Madelung equations to better model real fluids.
+They called the flow described by this equation the \textbf{Schrödinger Flow}.
+The authors validated that the Schrödinger Flow can indeed model real fluids by using it to simulate turbulent flows in 2D and 3D. The simulation was a Direct Numerical Simulation (DNS) done classically.
+
+Alongside the new equations, they also proposed a fully quantum algorithm for simulating the case of the Incompressible Schrödinger Flow.
+The algorithm consists of 5 steps per time step of simulation, with measurements only at the end of the simulation.
+
+The algorithm was tested by simulating a 1D steady flow and a 2D turbulent flow.
+The simulations were performed using Qiskit \cite{qiskit2024} and matched the theoretical predictions.
+
+Unfortunately, the algorithm does not yet provide a speedup over classical methods. This is because steps 2 and 4 are bottlenecks with no known efficient implementations.
+Steps 1 and 3 do provide exponential speedups over classical implementations.
+The authors want to tackle these bottlenecks in future works.
+
+Even ignoring the proposed algorithm's current limitations, the Schrödinger Flow model itself is not perfect.
+Despite being able to model some turbulent flows it is not yet a universal model for all fluid flows.
+
+\paragraph*{Quantum Lattice Boltzmann Methods}
+In the classical Lattice Boltzmann Method, we discretize space and velocity and try to model the \textbf{fluid density}.
+The function $f_{i}(x,t)$ denotes the "amount" of fluid moving in direction $i$ at position $x$ and time $t$.
+Unsurprisingly, summing over $i$ gives the fluid density at lattice site $x$ and time $t$.
+There is however an alternative way to interpret this function, one that better leads to \textbf{Quantum Lattice Boltzmann Methods} (QLBMs).
+
+Instead of thinking about many particles moving in different directions, we can imagine a single particle that has different \emph{probabilities}\footnote{Technically they are not proper probabilities because the sum is still the density, but this can be easily solved by dividing by the total fluid density} of moving in different directions.
+Now our particle is in a \emph{superposition} of the different directions. We can model a single lattice site as a quantum state:
+\begin{displaymath}
+    \label{eq:qlbm}
+    \ket{\psi_x} = \ket{x}\sum_{i} \frac{f_{i}(x)}{f(x)} \ket{i}
+\end{displaymath}
+where $\ket{x}$ is an encoding of the site x and $\ket{i}$ is the basis state corresponding to direction $i$.
+
+An alternative mapping is to consider a tensor product instead of a sum:
+\begin{displaymath}
+    \label{eq:qlbm2}
+    \ket{\psi_x} = \ket{x}\bigotimes_{i} (\sqrt{1-f_i(x)}\ket{0} + \sqrt{f_i(x)}\ket{1})
+\end{displaymath}
+
+In both cases the total state is a superposition of all lattice sites.
+Unfortunately, Schalkers and Möller showed that both of these encodings have issues \cite{schalkers2024importance}:
+\begin{itemize}
+    \item The first encoding does not admit a unitary \textbf{collision operator}
+    \item The second encoding does not admit a unitary \textbf{streaming operator}
+\end{itemize}
+
+This means that any practical QLBM will have to use more sophisticated encodings.
+
+There are many different QLBMs proposed, each with different encodings and ways to implement the collision and streaming operators.
+We will be focusing on Budinski's QLBM \cite{budinski2021quantum} because of its intuitive encoding.
+Other QLBMs will be briefly mentioned when relevant.
+
+Given a D1Q2 lattice with $M$ sites, Budinski's encoding is:
+\begin{displaymath}
+    \label{eq:qlbm3}
+    \ket{\psi} = \ket{0} \sum_{i=0}^{2M-1} \frac{f_{\alpha, i}}{||f||}\ket{i}
+\end{displaymath}
+where $\alpha$ is $1$ or $2$ for the two different velocities and $i$ is the lattice site.
+The encoding can be generalized to other lattice schemas.
+
+This encoding looks similar to the first encoding presented, but the auxiliary qubit is very important.
+That qubit allows Budinski to implement the normally non-unitary collision operator as a \textbf{block encoding}\footnote{A block encoding is a way to embed a non-unitary matrix into a larger unitary matrix.}.
+
+The propagation step is implemented similar to a \textbf{Quantum Walk} \cite{childs2009universal}, by shifting the qubits left and right respectively.
+
+Budinski tested his QLBM by simulating a simple diffusion\footnote{An initial static distribution is simply left to evolve over time} using both D1Q2 and D2Q5 lattices.
+The results match both analytical solutions and classical simulations.
+
+For a DmQn lattice with M sites, the complexity analysis of this algorithm shows it is logarithmic in the number of lattice sites: $O(n\log(mM))$. This is a significant speedup over classical Lattice Boltzmann Methods which are linear.
+Unfortunately this QLBM has a crucial limitation: each time step requires measurements and a new initialization of the state.
+It is especially oppressive as the encoding (which was excluded from the above complexity) is linear in the number of lattice sites.
+
+There are more recent developments that try to solve these problems.
+For instance, Kocherla et al. proposed a QLBM that can delay the need for measurements until the end of the simulation \cite{kocherla2024fully}.
+
+\section{The Advection-Diffusion QLBM}
+\label{sec:qlbm-detail}
+
+The QLBM, as the name suggests, is the quantum version of the classical Lattice Boltzmann Method (LBM) algorithm.
+
+LBMs work by discretizing space into a lattice structure, where each lattice site contains a set of \textbf{link distributions}.
+Each link distribution has an associated link velocity and represents the proportion of the simulated quantity that will propagate along that link.
+Discretization schemes are named after the number of dimensions and the number of links: D1Q3 for 1D with 3 links, D2Q9 for 2D with 9 links, D3Q27 for 3D with 27 links.
+
+An iteration of the algorithm consists of two main steps:
+\begin{enumerate}
+    \item \textbf{Collision:} The values of the link distributions are updated based on a \textbf{collision operator}. The specific operator depends on details of the simulated behavior.
+    \item \textbf{Streaming:} The distribution values are propagated to neighboring sites based on the defined link velocities.
+\end{enumerate}
+
+Finally, the link distributions are summed up in order to recover the macroscopic distribution.
+
+One of the earliest implementations of a QLBM was proposed by Budinski \cite{budinski2021quantum}.
+He proposed a quantum circuit that could simulate flows governed by the \textbf{advection-diffusion equation}:
+
+\begin{equation}
+    \partial_t\Phi = D\nabla^{2}\Phi - \nabla(\mathbf{u}\Phi)
+\end{equation}
+
+Where $\Phi(x)$ is the distribution function, $D$ is the diffusion coefficient and $\mathbf{u(x)}$ is the velocity field.
+
+He later extended the method to the Navier-Stokes equations \cite{ljubomir2022quantum} via the stream-vorticity formulation and validated his results in a lid-driven cavity flow simulation.
+
+\section{Linear Combination of Unitaries}
+\label{sec:lcu}
+
+The collision operator in the LBM can be implemented as a diagonal matrix $M$ of size $2^{m+n} \times 2^{m+n}$, where $m$ is the number of lattice qubits and $n$ is the number of link qubits.
+
+Unfortunately, this matrix is not unitary, but we can circumvent this by using a technique called \textbf{Linear Combination of Unitaries} \cite{childs2012hamiltonian}.
+We can express $M$ as $\frac{1}{2}(U_1 + U_2)$ with $U_1 = M + i\sqrt{I - M^2}$ and $U_2 = M - i\sqrt{I - M^2}$.
+
+These matrices are both unitary and can be implemented as quantum gates.
+
+To apply the desired linear combination, we utilize an ancilla qubit prepared in the state $\ket{0} + \ket{1}$.
+Then we apply each of the unitaries conditioned on the $\ket{0}$ and $\ket{1}$ states of the ancilla qubit, respectively.
+Other than the ancilla, the drawback of this method is that our desired result is only present in the $\ket{0}$ substate.
+This is not a problem when performing Statevector simulations, but it increases the number of shots required for running the algorithm on a real quantum computer.

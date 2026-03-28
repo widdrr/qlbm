@@ -1,0 +1,51 @@
+\documentclass{thesis.cs.pub.ro}
+\makeindex
+
+% Additional packages needed for content
+\usepackage{braket}
+\usepackage{tikz}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{float}
+
+% TOC only two levels deep: chapter (1) + section (2.1), no subsection (2.1.1)
+\setcounter{tocdepth}{1}
+
+\begin{document}
+
+\input{src/global}
+
+\begin{frontmatter} % roman numbering
+
+%\maketitle
+%\input{template/titlepage.ro}
+\input{template/titlepage.en}
+
+\begin{acknowledgements}
+\input{src/base/acknowledgements}
+\end{acknowledgements}
+
+\begin{abstract}
+\input{src/base/abstract}
+\end{abstract}
+
+\input{template/contents.pages}
+
+\printabbrev
+
+\end{frontmatter} % end roman numbering
+
+% 1.5 linespacing for the contents
+% \onehalfspacing
+
+\input{src/main}
+
+\appendix
+\input{src/appendix/index}
+
+\bibliography{src/main}
+\bibliographystyle{plain}
+
+\printindex
+
+\end{document}

@@ -1,0 +1,20 @@
+\chapter{Conclusions}
+\label{chapter:conclusions}
+
+There is a lot of potential for quantum computing in computational fluid dynamics.
+Any speedup in CFD simulations could have significant impact in many important fields like aerodynamics, meteorology and medicine.
+Despite this, the field of Quantum Computational Fluid Dynamics is still in its early stages.
+
+Various groups are working on different approaches to extend classical CFD methods to quantum computers.
+The algorithms generally agree with both classical counterparts and theoretical solutions.
+That being said, because of the limited number of qubits we can simulate, quantum CFD simulations are limited to low-dimensional, simple problems.
+Theoretical improvements to the runtime of simulations have been shown, but all of them have practical drawbacks that need to be addressed.
+
+The focus in recent times has been exactly to address these limitations and make the algorithms viable for near term quantum computers.
+
+In this work we presented a fully generic and parameterized implementation of a QLBM algorithm for the advection-diffusion equation.
+We validated the implementation with various experiments of increasing complexity and demonstrated that it matches classical simulation within a reasonable error margin.
+
+We successfully demonstrated a generic method for implementing local, linear, norm-preserving boundary conditions in the QLBM.
+The method leverages LCU and SVD to handle non-unitary boundary operators, and optimizes circuit design by combining collision and boundary steps.
+Validation through a 1D advection-diffusion simulation with solid walls confirmed that the quantum implementation matches classical results within numerical precision.

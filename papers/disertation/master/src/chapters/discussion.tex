@@ -1,0 +1,30 @@
+\chapter{Challenges, Limitations and Future Work}
+\label{chapter:discussion}
+
+\section{Current Limitations}
+\label{sec:limitations}
+
+Unfortunately this QLBM has a crucial limitation: each time step requires measurements and a new initialization of the state.
+It is especially oppressive as the encoding (which was excluded from the above complexity) is linear in the number of lattice sites.
+
+It is still unclear if the higher error for complex velocity fields is due to the algorithm itself or our implementation. Further investigation is required.
+
+The algorithm requires quantum state tomography at each iteration which is a significant limitation for practical usage.
+There is active research in this area, such as the work of Kocherla et al. \cite{kocherla2024fully}, in which they can defer measurement until the end of the simulation.
+Combining their approach with our implementation is an interesting avenue.
+
+Both the initialization procedure and the collision operator are highly inefficient, relying on Qiskit's transpiler to generate complex and deep circuits.
+
+\section{Future Directions}
+\label{sec:future}
+
+The algorithm could be extended to simulate Navier-Stokes flows by using the stream-vorticity formulation, as proposed by Budinski \cite{ljubomir2022quantum}.
+
+There are plenty of directions for future work regarding boundary conditions:
+\begin{itemize}
+    \item Investigating the kinds of boundary conditions that can be expressed using this method, and whether or not all post-streaming conditions can be rewritten as pre-streaming ones.
+    \item Extending the method to support constants in the boundary equations, allowing for source and sink terms.
+    \item Extending the method to support non-local boundary conditions that depend on multiple nodes.
+    \item Testing the method in higher-dimensional simulations.
+    \item Exploring other methods for the LCU decomposition that would avoid SVD.
+\end{itemize}

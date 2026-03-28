@@ -1,0 +1,164 @@
+\chapter{Generic Quantum Lattice Boltzmann Implementation}
+\label{chapter:implementation}
+
+\section{Contributions}
+\label{sec:contributions}
+
+Our QLBM algorithm is based on the work of Wawrzyniak et al. \cite{wawrzyniak2025base}, which in turn builds upon Budinski's original algorithm.
+Their version extends the original algorithm to support nonuniform velocity fields and improves the initialization procedure.
+
+For the algorithm itself, our contribution is simplifying the initialization thus slightly reducing the gate count, at the cost of minor numerical differences. The gate count reduction is linear in the number of links.
+
+Unlike all previous implementations we could find, we provide a truly generic, parameterized implementation that can work with any number of dimensions and any arbitrary set of links, including non-standard sets.
+For the implementation we used the Qiskit framework and the Qiskit Aer Statevector simulator \cite{qiskit2024}.
+
+An iteration of the algorithm consists of 4 steps:
+\begin{enumerate}
+    \item Initialization: Prepare the quantum state with the initial distribution function.
+    \item Collision: Apply the collision operator to update the link distributions.
+    \item Streaming: Propagate the link distributions to neighboring sites based on the link velocities.
+    \item Compute macros: Recover the macroscopic distribution from the final state.
+\end{enumerate}
+
+Performing multiple iterations requires reinitializing the quantum state with the updated distribution function after each iteration.
+If the velocity field or the link velocities change between iterations, the quantum circuit must be reconfigured accordingly.
+
+\section{Circuit Structure}
+\label{sec:circuit}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{src/img/figures/complete_circuit.png}
+    \caption{Complete quantum circuit for a single iteration of the QLBM algorithm. $q_{0-2}$ encode the X dimension, $q_{3-5}$ encode the Y dimension, $q_{6-8}$ encode the link velocities and $q_{9}$ is the ancilla qubit. The circuit is parameterized by the link velocities $[(0,0), (-1,0), (1,0), (-1,-1), (2,1)]$}
+    \label{fig:complete_circuit}
+\end{figure}
+
+\paragraph*{Initialization}
+The distribution function is flattened and encoded as amplitudes of a quantum state.
+The number of qubits required for the total state is:
+\begin{itemize}
+    \item $n = \lceil \log_2(N) \rceil$, where $N$ is the number of links.
+    \item $m = \sum_{i} \lceil \log_2(M_i) \rceil$, where $M_i$ is the number of lattice sites in dimension $i$.
+    \item 1 ancilla qubit required for the Collision step.
+\end{itemize}
+
+The resulting state is:
+
+\begin{equation}
+    \ket{\psi} = \ket{0}\ket{0}^n\sum_{x} \frac{\Phi(x)}{||\Phi(x)||} \ket{x}
+\end{equation}
+
+Where the first qubit is the ancilla, the next $n$ qubits encode the link index and the remaining $m$ qubits encode the lattice site index.
+The initialization is performed via Qiskit's \texttt{initialize} function, which makes use of Iten et al.'s exponential procedure \cite{iten2016isometries} to prepare a state given arbitrary amplitudes.
+
+Following Wawrzyniak et al., we only initialize one of the link substates like this and make use of Hadamard gates to prepare the remaining substates.
+Unlike them however, we do not attempt to only initialize the $N$ link substates, but instead initialize the entire link subspace as an equal superposition.
+
+\begin{equation}
+    \ket{\psi} = \ket{0}\frac{1}{\sqrt{2^n}}\sum_{i}^{2^n} \ket{i}\sum_{x}\frac{\Phi(x)}{||\Phi(x)||} \ket{x}
+\end{equation}
+
+The extra states are handled by the collision operator which will update them to zero.
+This choice reduces the gate count and simplifies the implementation.
+
+\paragraph*{Collision}
+Approximating the Advection Diffusion equation using the LBM discretization and using the Bhatnagar-Gross-Krook (BGK) collision operator \cite{bhatnagar1954model}, we can express the collision step as:
+\begin{equation}
+    \Phi_i(x,t) = w_i \Phi_i(x,t)(1 + \frac{\mathbf{e}_i \cdot \mathbf{u}(\mathbf{x},t)}{c_s^2})
+\end{equation}
+
+With $w_i$ being the link weight, $\mathbf{e}_i$ the link velocity, $\mathbf{u}(\mathbf{x},t)$ the velocity field at site $\mathbf{x}$ and time $t$ and $c_s$ the speed of sound.
+
+This operation can be implemented as a diagonal matrix $M$ of size  $2^{m+n} \times 2^{m+n}$, where $m$ is the number of lattice qubits and $n$ is the number of link qubits.
+
+We used Qiskit's \texttt{DiagonalGate} to implement these unitaries, which defines a gate by a diagonal matrix.
+
+\paragraph*{Streaming}
+Streaming involves propagating the link distributions to neighboring sites based on the link velocities.
+The basic operation is shifting the amplitudes of a quantum state left or right, denoted as $L\_Gate$ and $R\_Gate$ respectively.
+
+\begin{figure}[H]
+    \centering
+    \subfloat[$L\_Gate$ for 4 qubits\label{fig:l_gate}]{%
+        \includegraphics[width=0.45\textwidth]{src/img/figures/l_gate.png}%
+    }
+    \hfill
+    \subfloat[$R\_Gate$ for 4 qubits\label{fig:r_gate}]{%
+        \includegraphics[width=0.45\textwidth]{src/img/figures/r_gate.png}%
+    }
+    \caption{Quantum circuits for implementing the streaming operation}
+    \label{fig:streaming_gates}
+\end{figure}
+
+Conditionally applying these gates based on the binary encoding of the link index allows us to propagate the link distributions for any arbitrary link velocity vector.
+For example, to perform streaming by the velocity vector $(2,-1)$, we would apply the $R\_Gate$ twice to the qubits encoding the first dimension and the $L\_Gate$ once to the qubits encoding the second dimension.
+
+\paragraph*{Computing Macroscopic Quantities}
+
+Finally, we need to recover the macroscopic distribution by summing over the link distributions.
+This can be done both classically, after obtaining the final state or by applying a series of Hadamard and Swap gates to accumulate the distributions into a single link substate.
+
+Our implementation provides both options.
+
+\section{Boundary Conditions}
+\label{sec:boundary-conditions}
+
+In an LBM simulation, enforcing boundary conditions involves determining unknown incoming distributions at boundary nodes based on known outgoing distributions and other auxiliary information.
+Depending on how the boundary is encoded into the lattice, LBM simulators distinguish between
+\begin{itemize}
+    \item \textbf{Wet-Nodes} The boundary conditions are applied directly on the fluid nodes at the boundary. This is usually done after streaming.
+    \item \textbf{Link-Wise} The boundary conditions are applied between fluid nodes and solid nodes. This is usually done during streaming.
+\end{itemize} \cite{olbug:18}.
+
+Due to the linear constraints of quantum operations, we focused on modeling the unknown distributions as linear combinations of the known distributions at the boundary nodes.
+This is a well known wet-node approach, detailed by \cite{zou1997pressure}.
+Additionally, due to the norm-preserving nature of quantum operations, we restrict ourselves to boundary conditions that preserve the total density at the boundary node.
+Mathematically, this can be expressed as:
+
+\begin{equation}
+f_i^{in} = \sum_j B_{ij} f_j^{out}
+\end{equation}
+
+Or in matrix form:
+\begin{equation}
+\mathbf{f}^{in} = B \cdot \mathbf{f}^{out}
+\end{equation}
+
+\paragraph*{Quantum Implementation via LCU and SVD}
+Since the boundary matrix $B$ is generally non-unitary, it cannot be directly implemented as a quantum gate.
+To address this, we can employ the Linear Combination of Unitaries (LCU) technique \cite{childs2012hamiltonian}.
+This is already used in many QLBM implementations to handle the collision step \cite{budinski2021quantum}.
+Because the collision operator is diagonal, it was straightforward to express it as a linear combination of two unitaries:
+\begin{equation}
+C = \frac{1}{2} (C + i\sqrt{I - C^2}) + \frac{1}{2}(C - i\sqrt{I - C^2})
+\end{equation}
+
+The Boundary operator $B$ is unfortunately not diagonal.
+For simplicity, we opted to decompose it using Singular Value Decomposition (SVD):
+\begin{equation}
+    B = U \Sigma V^{\dagger}
+\end{equation}
+where $U, V$ are unitary and $\Sigma$ is diagonal. Using this fact, we can decompose $\Sigma$ as a linear combination of two unitaries and distribute $U$ and $V^{\dagger}$ to obtain a linear combination for $B$:
+\begin{equation}
+    B = \frac{1}{2} (U (\Sigma + i\sqrt{I - \Sigma^2}) V^{\dagger} + U (\Sigma - i\sqrt{I - \Sigma^2}) V^{\dagger})
+\end{equation}
+This allows us to implement $B$ using one ancilla qubit with a 50\% success probability.
+
+\paragraph*{Circuit Optimization}
+As discussed, LCU is already employed for the collision step, already resulting in a 50\% success probability per iteration.
+If we further add another LCU step for the boundary conditions, the overall success probability would drop to 25\%.
+
+The idea here was to move the boundary conditions step before the streaming step, and combine the collision and boundary operators into a single matrix.
+This is equivalent to considering the boundary conditions as a fundamental part of the collision process, instead of a separate step.
+\begin{equation}
+    C_{combined} =  B \cdot C
+\end{equation}
+We then perform SVD on this combined matrix $C_{combined}$. This maintains a single LCU step per iteration, preserving the 50\% success probability.
+
+This shift does involve adjusting the boundary condition matrix to account for the fact that unknown distributions are now streamed immediately after being computed.
+While we have not proven that it is always possible to rewrite a post-streaming boundary condition as a pre-streaming one, we have managed to do so for the case we tested.
+
+\section{Complexity Analysis}
+\label{sec:complexity}
+
+\todo{Write complexity analysis section. Consider: qubit count, gate count/depth for each step (initialization, collision, streaming, macros), comparison with classical LBM, impact of boundary conditions on complexity.}

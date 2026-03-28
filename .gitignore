@@ -1,6 +1,6 @@
 experiments/
 *.pyc
-papers/
 *.egg-info/
 *.lock
 temp-material/
+*.pdf
