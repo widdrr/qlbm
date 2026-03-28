@@ -13,8 +13,40 @@
 
         tex = pkgs.texlive.combine {
           inherit (pkgs.texlive)
-            scheme-medium
+            scheme-small
+            # math
+            amsmath
+            amsfonts
+            # physics notation
+            braket
             qcircuit
+            # page layout
+            geometry
+            fancyhdr
+            parskip
+            setspace
+            # fonts
+            psnfss       # .sty files for PS fonts
+            courier      # pcrr8t metrics
+            helvetic     # phvr8t metrics
+            hyphen-english
+            # tables
+            booktabs
+            multirow
+            tools        # longtable, multicol
+            # figures
+            graphics     # graphicx
+            float
+            subfig
+            pgf          # tikz
+            # cross-references & links
+            hyperref
+            # code listings
+            listings
+            # nomenclature & indexing
+            nomencl
+            bigfoot      # perpage
+            # build
             latexmk;
         };
       in

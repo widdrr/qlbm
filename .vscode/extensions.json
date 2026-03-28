@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "james-yu.latex-workshop",
+    "mkhl.direnv"
+  ]
+}
