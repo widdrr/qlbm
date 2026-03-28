@@ -4,3 +4,4 @@ experiments/
 *.lock
 temp-material/
 *.pdf
+.direnv/
