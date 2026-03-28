@@ -20,13 +20,13 @@
       in
       {
         devShells.default = pkgs.mkShell {
+          name = "qlbm";
           packages = with pkgs; [
             uv
             tex
             poppler-utils
           ];
 
-          shellHook = "";
         };
       }
     );
