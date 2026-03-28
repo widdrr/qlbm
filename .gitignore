@@ -1,6 +1,37 @@
 experiments/
-*.pyc
-*.egg-info/
 temp-material/
-*.pdf
 .direnv/
+
+# python
+*.pyc
+*.pyo
+__pycache__/
+*.egg-info/
+.pytest_cache/
+
+# jupyter
+.ipynb_checkpoints/
+
+# latex build artifacts
+*.log
+*.lot
+*.lof
+*.blg
+*.bbl
+*.out
+*.toc
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.synctex(busy)
+*.spl
+
+# nomenclature
+*.nlo
+*.nls
+
+# index
+*.idx
+*.ilg
+*.ind
