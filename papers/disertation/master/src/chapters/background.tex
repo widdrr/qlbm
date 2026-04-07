@@ -97,6 +97,7 @@ The common notation used to denote discretization schemas is the DnQm notation, 
 \caption{D2Q9: 2D lattice with 9 discrete velocities.}
 \label{fig:disc}
 \end{figure}
+\todo{REVISION: center Figure 2.1 properly}
 
 There are two main steps in an iteration of an LBM:
 \begin{enumerate}
@@ -124,6 +125,7 @@ A chain of gates is called a Circuit or Algorithm, depending on the context.
 While the fundamental principles involved are vastly different, Quantum Computing, in particular the Quantum Circuit formalism, shares this paradigm and has equivalent concepts.
 
 \todo{Finish Quantum Computing Fundamentals section}
+\todo{REVISION: finish section 2.2 completely}
 
 \paragraph*{Qubits}
 are the quantum counterpart for the bit, as the name suggests. Just like a bit it can have values of 0 or 1.
@@ -161,6 +163,7 @@ we can create algorithms for certain problems that could run faster than a class
 
 \todo{Describe measurement in computational basis, Born rule, state collapse, statevector simulation vs shots.}
 
+\todo{REVISION: add complexity analysis to section 2.3 (Quantum Approaches to CFD)}
 \section{Quantum Approaches to CFD}
 \label{sec:qcfd}
 
@@ -295,6 +298,7 @@ It is especially oppressive as the encoding (which was excluded from the above c
 There are more recent developments that try to solve these problems.
 For instance, Kocherla et al. proposed a QLBM that can delay the need for measurements until the end of the simulation \cite{kocherla2024fully}.
 
+\todo{REVISION: merge section 2.4 (Advection-Diffusion QLBM) into section 2.3 (Quantum Approaches to CFD)}
 \section{The Advection-Diffusion QLBM}
 \label{sec:qlbm-detail}
 
@@ -323,6 +327,7 @@ Where $\Phi(x)$ is the distribution function, $D$ is the diffusion coefficient a
 
 He later extended the method to the Navier-Stokes equations \cite{ljubomir2022quantum} via the stream-vorticity formulation and validated his results in a lid-driven cavity flow simulation.
 
+\todo{REVISION: move section 2.5 (LCU) into the quantum computing section as an "advanced" topic}
 \section{Linear Combination of Unitaries}
 \label{sec:lcu}
 

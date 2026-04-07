@@ -3,6 +3,7 @@
 
 Simulating physical quantum systems has been one of the original proposed applications of quantum computing \cite{feynman2018simulating}.
 While quantum computing for quantum physics is natural and obvious, quantum computing for classical physics is often overlooked.
+\todo{REVISION: rewrite this paragraph — "There is no shortage of classical physics problems..." is weak}
 There is no shortage of classical physics problems that are computationally hard and could benefit from quantum speedups.
 Among them, simulating fluids is a broad class of problems of great interest.
 
@@ -18,11 +19,13 @@ Despite theoretical advantages, there are plenty of practical challenges that ne
 In this work, we present a fully generic and parameterized implementation of a QLBM algorithm for the \textbf{advection-diffusion equation}.
 As of this writing, and to the best of our knowledge, this is the only such implementation available.
 
+\todo{REVISION: remove this paragraph — duplicate of previous one about QLBM being a promising candidate}
 Among methods for performing computational fluid dynamics (CFD) simulations on quantum computers, the Quantum Lattice Boltzmann Method (QLBM) is seen as a promising candidate and has been the subject of several recent works \cite{kocherla2024fully, xu2025improved, wang2025quantum, tiwari2025algorithmic}.
 
 The classical Lattice Boltzmann Method (LBM) consists of two main steps: Collision, which is local but non-linear, and Streaming which is linear but non-local.
 Any worthwhile CFD simulation must also include boundary conditions in order to model relevant physical scenarios.
 Authors usually implement specific boundary conditions directly into the circuits \cite{ljubomir2022quantum,jennings2026simulating,lee2025advanced}.
 
+\todo{REVISION: unify this BC paragraph with the rest of the intro — it feels too separate/disconnected}
 In this thesis, we also propose a generic method for modelling \textbf{local, linear, norm-preserving} boundary conditions in a QLBM circuit.
 The method is validated through a 1D advection-diffusion simulation with solid walls.

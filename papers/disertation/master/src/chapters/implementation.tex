@@ -7,6 +7,7 @@
 Our QLBM algorithm is based on the work of Wawrzyniak et al. \cite{wawrzyniak2025base}, which in turn builds upon Budinski's original algorithm.
 Their version extends the original algorithm to support nonuniform velocity fields and improves the initialization procedure.
 
+\todo{REVISION: remove "minor numerical differences" — what does that even mean? Also do NOT present the initialization trick as an improvement — in practice it's probably worse}
 For the algorithm itself, our contribution is simplifying the initialization thus slightly reducing the gate count, at the cost of minor numerical differences. The gate count reduction is linear in the number of links.
 
 Unlike all previous implementations we could find, we provide a truly generic, parameterized implementation that can work with any number of dimensions and any arbitrary set of links, including non-standard sets.
@@ -100,6 +101,7 @@ This can be done both classically, after obtaining the final state or by applyin
 
 Our implementation provides both options.
 
+\todo{REVISION: merge boundary conditions into the initial algorithm presentation — don't keep it as a separate section}
 \section{Boundary Conditions}
 \label{sec:boundary-conditions}
 
@@ -155,6 +157,9 @@ This is equivalent to considering the boundary conditions as a fundamental part 
 \end{equation}
 We then perform SVD on this combined matrix $C_{combined}$. This maintains a single LCU step per iteration, preserving the 50\% success probability.
 
+\todo{REVISION: improve the probability discussion with LCU optimization details}
+\todo{REVISION: add section about post-to-pre streaming trick and discoveries}
+
 This shift does involve adjusting the boundary condition matrix to account for the fact that unknown distributions are now streamed immediately after being computed.
 While we have not proven that it is always possible to rewrite a post-streaming boundary condition as a pre-streaming one, we have managed to do so for the case we tested.
 
@@ -162,3 +167,4 @@ While we have not proven that it is always possible to rewrite a post-streaming 
 \label{sec:complexity}
 
 \todo{Write complexity analysis section. Consider: qubit count, gate count/depth for each step (initialization, collision, streaming, macros), comparison with classical LBM, impact of boundary conditions on complexity.}
+\todo{REVISION: add code snippets for essential parts of the implementation}
