@@ -1,4 +1,5 @@
 import csv
+import gc
 import numpy as np
 from numpy.typing import NDArray
 from typing import Optional
@@ -40,7 +41,17 @@ def simulate_flow(
         if boundary_conditions is not None:
             grid_size = np.prod(sites_per_dim)
             padded_num_velocities = 2**link_qubits
-            bc_matrix = bc_config_to_matrix(boundary_conditions, grid_size, padded_num_velocities)
+            nv_actual = boundary_conditions.shape[-1]
+            ndim_spatial = boundary_conditions.ndim - 2
+            if ndim_spatial > 1:
+                # Flatten spatial dimensions in Fortran order (x varies fastest)
+                perm = list(reversed(range(ndim_spatial))) + [ndim_spatial, ndim_spatial + 1]
+                bc_flat = np.ascontiguousarray(
+                    np.transpose(boundary_conditions, perm)
+                ).reshape(grid_size, nv_actual, nv_actual)
+            else:
+                bc_flat = boundary_conditions
+            bc_matrix = bc_config_to_matrix(bc_flat, grid_size, padded_num_velocities)
 
         combined_matrix = combine_collision_bc_matrices(collision_matrix, bc_matrix)
         config_parts = [
@@ -110,8 +121,11 @@ def simulate_flow(
                 if cached_macros is not None:
                     qc.compose(cached_macros, inplace=True)
 
-                result = simulator.run(qc).result()
+                job = simulator.run(qc)
+                result = job.result()
                 state = result.get_statevector()
+                del job, result, qc
+                gc.collect()
 
                 initial_density = recover_quantity_quantum_macros(state, sites_per_dim, num_links, original_sum)
                 writer.writerow(initial_density.flatten(order='F'))

@@ -6,6 +6,20 @@ from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
 
 
+def boundary_mask(boundary_conditions: NDArray) -> NDArray[np.bool_]:
+    """Derive a boolean mask of boundary nodes from a BC array.
+
+    A site is a boundary node if its local BC matrix differs from the identity.
+    Works for any dimensionality: 1D shape (N, nv, nv), 2D shape (Nx, Ny, nv, nv), etc.
+    """
+    nv = boundary_conditions.shape[-1]
+    spatial_shape = boundary_conditions.shape[:-2]
+    eye = np.eye(nv)
+    flat = boundary_conditions.reshape(-1, nv, nv)
+    is_bc = ~np.all(np.isclose(flat, eye), axis=(1, 2))
+    return is_bc.reshape(spatial_shape)
+
+
 # ── 1D helpers ────────────────────────────────────────────────────────────────
 
 def save_simulation_snapshots_1d(
@@ -52,6 +66,7 @@ def visualize_snapshots_1d(
     grid_size: int,
     iterations: list[int] = None,
     title: str = 'Simulation Snapshots',
+    boundary_nodes: NDArray[np.bool_] | None = None,
 ) -> None:
     df = pd.read_csv(filename, header=None)
 
@@ -78,9 +93,13 @@ def visualize_snapshots_1d(
         ax.set_title(f'Iteration {iter_num}')
         ax.grid(True, alpha=0.3)
 
-        ax.axvspan(-1, 1, color='r', alpha=0.3, label='Boundary' if idx == 0 else '')
-        ax.axvspan(grid_size - 2, grid_size, color='r', alpha=0.3)
-        if idx == 0:
+    if boundary_nodes is not None:
+        labeled = False
+        for i in np.where(boundary_nodes)[0]:
+            label = 'Boundary' if not labeled else ''
+            ax.axvspan(i - 0.5, i + 0.5, color='r', alpha=0.3, label=label)
+            labeled = True
+        if labeled:
             ax.legend()
 
     plt.tight_layout()
@@ -93,6 +112,7 @@ def animate_simulation_1d(
     interval: int = 100,
     title: str = 'Simulation Animation',
     velocity_configs: list = None,
+    boundary_nodes: NDArray[np.bool_] | None = None,
 ) -> HTML:
     df = pd.read_csv(filename, header=None)
 
@@ -110,8 +130,12 @@ def animate_simulation_1d(
     ax.set_ylabel('Density')
     ax.grid(True, alpha=0.3)
 
-    ax.axvspan(-1, 1, color='r', alpha=0.3, label='Boundary')
-    ax.axvspan(grid_size - 2, grid_size - 0, color='r', alpha=0.3)
+    if boundary_nodes is not None:
+        labeled = False
+        for i in np.where(boundary_nodes)[0]:
+            label = 'Boundary' if not labeled else ''
+            ax.axvspan(i - 0.5, i + 0.5, color='r', alpha=0.3, label=label)
+            labeled = True
 
     quiver = None
     vel_text = None
@@ -232,35 +256,50 @@ def animate_density_evolution(
     dimensions: tuple[int, int],
     filename: str,
     interval: int = 100,
-    repeat: bool = False,
-) -> FuncAnimation:
+    title: str = 'Density Evolution',
+    boundary_nodes: NDArray[np.bool_] | None = None,
+) -> HTML:
     df = pd.read_csv(filename, header=None)
 
-    fig, ax = plt.subplots(figsize=(8, 6))
-    img = ax.imshow(np.zeros(dimensions).T, cmap='viridis', origin='lower', animated=True)
-    plt.colorbar(img)
+    vmin = df.values.min()
+    vmax = df.values.max()
 
-    ax.set_title('Density Evolution')
+    fig, ax = plt.subplots(figsize=(8, 6))
+    img = ax.imshow(
+        np.zeros(dimensions).T, cmap='viridis', origin='lower',
+        vmin=vmin, vmax=vmax,
+    )
+    plt.colorbar(img, ax=ax, label='Density')
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
+    title_text = ax.set_title(f'{title} - Iteration 0')
+
+    if boundary_nodes is not None:
+        overlay = np.full((*dimensions, 4), 0.0)  # RGBA
+        overlay[boundary_nodes, :] = [1.0, 0.0, 0.0, 0.3]  # red with alpha
+        ax.imshow(overlay.transpose(1, 0, 2), origin='lower', extent=(-0.5, dimensions[0] - 0.5, -0.5, dimensions[1] - 0.5))
+        # Invisible artist for the legend entry
+        from matplotlib.patches import Patch
+        ax.legend(handles=[Patch(facecolor='red', alpha=0.3, label='Boundary')], loc='upper right', fontsize=8)
 
     def init():
         img.set_array(np.zeros(dimensions).T)
-        return [img]
+        return [img, title_text]
 
     def update(frame):
         current_density = df.iloc[frame].values.reshape(dimensions, order='F').T
         img.set_array(current_density)
-        img.set_clim(vmin=df.values.min(), vmax=df.values.max())
-        return [img]
+        title_text.set_text(f'{title} - Iteration {frame}')
+        return [img, title_text]
 
     anim = FuncAnimation(
         fig, update, frames=len(df),
-        init_func=init, blit=True,
-        interval=interval, repeat=repeat,
+        init_func=init, blit=False,
+        interval=interval, repeat=True,
     )
 
-    return anim
+    plt.close()
+    return HTML(anim.to_jshtml())
 
 
 # ── 3D helpers ────────────────────────────────────────────────────────────────

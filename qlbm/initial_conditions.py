@@ -192,3 +192,88 @@ def create_bounceback_bc_1d(
     bc[-2][stationary_idx, right_idx] = 1.0
 
     return bc
+
+
+# ── 2D Boundary condition helpers ────────────────────────────────────────────
+
+def get_gaussian_ring_initial_distribution(
+    sites: tuple[int, int],
+    ring_radius: float,
+    ring_width: float,
+    amplitude: float = 0.9,
+    background: float = 0.1,
+) -> NDArray[np.float64]:
+    x = np.arange(sites[0])
+    y = np.arange(sites[1])
+    X, Y = np.meshgrid(x, y, indexing='ij')
+
+    center_x = sites[0] / 2
+    center_y = sites[1] / 2
+
+    r = np.sqrt((X - center_x)**2 + (Y - center_y)**2)
+    return background + amplitude * np.exp(-((r - ring_radius)**2) / (2 * ring_width**2))
+
+
+def create_split_walls_bc_2d(
+    grid_size: tuple[int, int],
+    links: list[list[int]],
+    reflect_frac: float = 0.2,
+) -> NDArray[np.float64]:
+    """Fully enclosed walls on all four sides of a 2D grid.
+
+    Distributions heading perpendicular into a wall are split:
+    *reflect_frac* is reflected back, the rest is divided equally
+    among tangential directions that do not also point into a wall.
+    """
+    Nx, Ny = grid_size
+    nv = len(links)
+
+    bc = np.zeros((Nx, Ny, nv, nv))
+    for x in range(Nx):
+        for y in range(Ny):
+            bc[x, y] = np.eye(nv)
+
+    link_dirs: dict[tuple[int, ...], int] = {}
+    for i, link in enumerate(links):
+        link_dirs[tuple(link)] = i
+
+    stat_idx = link_dirs.get((0, 0))
+
+    for x in range(1, Nx - 1):
+        for y in range(1, Ny - 1):
+            # Collect (perp_in, perp_out) for each adjacent wall
+            wall_links: list[tuple[int, int]] = []
+            if x == 1 and (-1, 0) in link_dirs and (1, 0) in link_dirs:
+                wall_links.append((link_dirs[(-1, 0)], link_dirs[(1, 0)]))
+            if x == Nx - 2 and (1, 0) in link_dirs and (-1, 0) in link_dirs:
+                wall_links.append((link_dirs[(1, 0)], link_dirs[(-1, 0)]))
+            if y == 1 and (0, -1) in link_dirs and (0, 1) in link_dirs:
+                wall_links.append((link_dirs[(0, -1)], link_dirs[(0, 1)]))
+            if y == Ny - 2 and (0, 1) in link_dirs and (0, -1) in link_dirs:
+                wall_links.append((link_dirs[(0, 1)], link_dirs[(0, -1)]))
+
+            if not wall_links:
+                continue
+
+            wall_in_set = {wl[0] for wl in wall_links}
+
+            for perp_in, perp_out in wall_links:
+                bc[x, y, perp_in, perp_in] = 0.0
+                bc[x, y, perp_out, perp_in] = reflect_frac
+
+                safe_tangentials = [
+                    t for t in range(nv)
+                    if t != perp_in and t != perp_out
+                    and t != stat_idx and t not in wall_in_set
+                ]
+
+                tangent_frac = 1.0 - reflect_frac
+                if safe_tangentials:
+                    frac_each = tangent_frac / len(safe_tangentials)
+                    for t in safe_tangentials:
+                        bc[x, y, t, perp_in] = frac_each
+                else:
+                    # No safe tangentials (e.g. narrow corridor) — full reflection
+                    bc[x, y, perp_out, perp_in] = 1.0
+
+    return bc
