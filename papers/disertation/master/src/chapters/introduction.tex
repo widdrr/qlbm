@@ -3,29 +3,26 @@
 
 Simulating physical quantum systems has been one of the original proposed applications of quantum computing \cite{feynman2018simulating}.
 While quantum computing for quantum physics is natural and obvious, quantum computing for classical physics is often overlooked.
-\todo{REVISION: rewrite this paragraph — "There is no shortage of classical physics problems..." is weak}
-There is no shortage of classical physics problems that are computationally hard and could benefit from quantum speedups.
-Among them, simulating fluids is a broad class of problems of great interest.
+Complex physical systems, especially ones described by partial differential equations, suffer from high-dimensional phase spaces,
+making large scale or high precision simulations difficult.
+The simulation of fluids is one such class of problems.
 
-\textbf{Computational Fluid Dynamics} (CFD) is the field concerned with the numerical simulation of fluid flows.
+\textbf{Computational Fluid Dynamics} (CFD) is the field concerned with the numerical simulation of fluids and their behavior.
 It has a wide range of important applications such as aerodynamics, meteorology and medicine \cite{blazek2015computational}.
 Over time, the scale, complexity and accuracy required from CFD applications have kept increasing.
 Modern CFD simulations are computationally expensive and are often designed to run on supercomputer architectures \cite{karp2024experience}.
 A quantum speedup for CFD simulations could have significant impact, assuming a future in which quantum computers are practical and available.
 
-Among the various explored methods, the \textbf{Quantum Lattice Boltzmann Method} (QLBM) is seen as a promising candidate with several groups actively researching it \cite{budinski2021quantum,itani2024quantum,kocherla2024fully, xu2025improved, tiwari2025algorithmic,wawrzyniak2025base}.
-Despite theoretical advantages, there are plenty of practical challenges that need to be addressed before this method can be useful for large scale simulations, which is the area most of the research is focused on.
+Among the various methods explored in the literature, the Quantum Lattice Boltzmann Method (QLBM) is a promising candidate with several groups actively researching it \cite{budinski2021quantum,itani2024quantum,kocherla2024fully, xu2025improved, tiwari2025algorithmic,wawrzyniak2025base}.
+The QLBM, as the name suggests, is a variant of the classical Lattice Boltzmann Method for CFD designed to run on quantum computers.
+The standard LBM steps: Collision, Streaming and Boundary Conditions; are transformed into quantum gates and circuits with the goal of achieving better time and memory complexities via quantum parallelism and superposition.
 
-In this work, we present a fully generic and parameterized implementation of a QLBM algorithm for the \textbf{advection-diffusion equation}.
-As of this writing, and to the best of our knowledge, this is the only such implementation available.
+In this thesis, I present a fully generic and parameterized implementation of a QLBM simulator with support for arbitraty velocity sets and in-lattice boundary conditions.
+Previous research hardcoded specific boundary conditions, such as bounce-back, directly into the circuit.
+My simulator allows for more flexibility by defining boundary conditions locally for each individual site. The only restrictions is that they must be linear and norm-preserving.
+As of the time of writing, and to the best of my knowledge, this is the only such implementation available.
 
-\todo{REVISION: remove this paragraph — duplicate of previous one about QLBM being a promising candidate}
-Among methods for performing computational fluid dynamics (CFD) simulations on quantum computers, the Quantum Lattice Boltzmann Method (QLBM) is seen as a promising candidate and has been the subject of several recent works \cite{kocherla2024fully, xu2025improved, wang2025quantum, tiwari2025algorithmic}.
+I validate the simulator against a classical implementation on several scenarios for the \emph{Advection-Diffusion Equation}.
+I evaluate the numerical error between the simulations as well as benchmark the runtime and resource utilization.
 
-The classical Lattice Boltzmann Method (LBM) consists of two main steps: Collision, which is local but non-linear, and Streaming which is linear but non-local.
-Any worthwhile CFD simulation must also include boundary conditions in order to model relevant physical scenarios.
-Authors usually implement specific boundary conditions directly into the circuits \cite{ljubomir2022quantum,jennings2026simulating,lee2025advanced}.
-
-\todo{REVISION: unify this BC paragraph with the rest of the intro — it feels too separate/disconnected}
-In this thesis, we also propose a generic method for modelling \textbf{local, linear, norm-preserving} boundary conditions in a QLBM circuit.
-The method is validated through a 1D advection-diffusion simulation with solid walls.
+Lastly, I explore and discuss the current limitations, both of my implementation and of the QLBM as a whole.
