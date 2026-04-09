@@ -125,7 +125,7 @@ While the fundamental principles involved are vastly different, Quantum Computin
 
 \paragraph*{The Qubit}
 is the quantum counterpart for the bit, as the name suggests. Abstracting away the physical ways they are implemented, a qubit can store a binary value: 0 or 1.
-Qubits are written using \emph{bra-ket} notation: $\ket{0}$, $\ket{1}$ for specific values or $\ket{x}$, $\ket{i}$, etc. for variables.
+Qubits are written using \emph{bra-ket} notation: $\ket{0}$, $\ket{1}$, $\ket{x}$, $\ket{i}$, $\ket{\psi}$, $\ket{\phi}$
 Unlike a bit which is a scalar, a qubit is actually a vector, with 
 \begin{equation*}
   \ket{0} = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \text{and} \ket{1} = \begin{pmatrix} 0 \\ 1 \end{pmatrix}
@@ -139,6 +139,7 @@ They are so important they get shorthand notation: $\ket{+}$ and $\ket{-}$ respe
 
 Moreover, the coefficients are not restricted to real numbers: $\frac{1}{\sqrt2}\ket{0} + \frac{i}{\sqrt2}\ket{1}$ and $\frac{1}{\sqrt2}\ket{0} - \frac{i}{\sqrt2}\ket{1}$
 are yet again important states: $\ket{+i}$ (or simply $\ket{i})$ and $\ket{-i}$ (not to be confused with $-\ket{i}$)
+The coefficient of a specific state in superposition is called the \emph{amplitude} of that state.
 
 A register of multiple qubits is normally described by the \emph{tensor product} of the individual qubits.
 \begin{equation*}
@@ -206,25 +207,119 @@ Despite qubits "storing" more information, that information is not directly acce
 To read the value of a qubit, a \emph{measurement} must be performed, and the result is always a basis state.
 
 When measuring a qubit that is in a superposition, one of the basis states is obtained at random.
-The probability of obtaining a specific state is equal to the amplitude squared of the state's coefficient the qubit. This is known as the \emph{Born Rule}
+The probability of obtaining a specific state is equal to the norm squared of the state's coefficient the qubit. This is known as the \emph{Born Rule}
 For example the state $\frac{1}{\sqrt3}\ket{0} + \frac{\sqrt2}{\sqrt3}\ket{1}$ has a $\frac{1}{3}$ chance of yielding $\ket{0}$, with the rest being $\ket{1}$.
 This is why qubits had the restriction of being normalized, because the sum of measurement probabilities must equal 1.
+
+Another important consequence of this rule is that certain states are undistinguishalbe.
+$\ket{\psi}$, $-\ket{\psi}$, $i\ket{\psi}$ all have the same measurement outcome distribution.
+In fact, $\ket{\psi} = e^{i\theta}{\psi}$ for all $\theta$. $e^{i\theta}$ is called the \emph{global phase}.
 
 The choice of measurement basis is arbitrary and dictates whether something even is a superposition or not.
 Measuring $\ket{+}$ in the computational basis yields equal probability outcomes, yet measuring in the Hadamard basis always gives the same answer, since $\ket{+}$ is a part of that basis.
 
 This limitation is what makes designing meaningful quantum algorithms challenging. 
 It might seem like it completely negates the previous upsides, but clever manipulation of the quantum states can still lead to faster algorithms in terms of computational complexity.
-Famous examples include Simon's Algorithm, Grover's Algorithm and Shor's Algorithm \todo{citations here}.
+Famous examples include Simon's Algorithm \cite{simon1997power}, Grover's Algorithm \cite{grover1996fast} and Shor's Algorithm \cite{shor1994algorithms}.
 
-\todo{add citations}
-\section{Linear Combination of Unitaries}
+\paragraph*{Quantum Circuits}
+are obtained by stringing together quantum gates. A circuit graphically represents the previously discussed primitives: qubits, gates, measurements.
+Qubits are represented by individual rows, or wires, in the circuit. In this thesis, the convention used will be that the rightmost qubit when written mathematically corresponds to the top qubit in the circuit.
+This is the standard for quantum simulators and frameworks.
+
+Gates are boxes placed on wires. Multi-qubit gates cover multiple wires. Particularly useful multi-qubit gates have dedicated representation. 
+For example controlled gates are represented with dots on the control wire, connected to the box on the target wire.
+Consecutive gates on the same wire corresponds to matrix multiplication, while parallel gates on separate wires to tensor products.
+
+Lastly measurements have their own special symbol, sometimes connecting to classical registers.
+
+\begin{figure}[htpb]
+    \centering
+    \begin{quantikz}
+        % Top wire (rightmost mathematically)
+        \lstick{$\ket{q_0}$} & \gate{H} & \ctrl{1} & \gate{T} & \meter{} \\
+        % Middle wire
+        \lstick{$\ket{q_1}$} & \gate{X} & \gate{U} & \qw      & \qw      \\
+        % Bottom wire
+        \lstick{$\ket{q_2}$} & \qw      & \octrl{-1}& \meter{} & \cw      
+    \end{quantikz}
+    \caption{An example quantum circuit. The quantum register is $\ket{q_{2}q_{1}q_{0}}$. $U$ is applied conditionally if $q_0$ is 1 and $q_2$ is 0.}
+    \label{fig:circuit_conventions}
+\end{figure}
+
+\section{Block Encoding \& Linear Combination of Unitaries}
 \label{sec:lcu}
 
-As previously discussed, non-unitary matrices cannot be quantum gates.
-This significantly limits the
+There are applications, such as Hamiltonian simulations, in which we would want to apply a non-unitary matrix to a quantum state \cite{childs2012hamiltonian,low2019hamiltonian}.
+As previously discussed, non-unitary matrices cannot be quantum gates because they would change the norm of the quantum state.
 
+Surprisingly, there are ways to work around this limitation, and the secret is adding more qubits to the register and going up in dimension.
+Consider a matrix a non-unitary matrix $A$. If we want to apply this to some state $\ket{\psi}$, we must first add an additional qubit, called an \emph{ancilla}.
+Then we work out a new unitary metrix $U$, which when applied to our new total state $\ket{0}\ket{\psi}$ will result in a superposition.
+One of the substates will have our desired $A\ket{\psi}$, while the other will have an auxiliary substate with the purpose of equalizing any norm change.
 
+\begin{equation*}
+    U\ket{0}\ket{\psi} = \alpha\ket{0}A\ket{\psi} + \beta\ket{1}B\ket{\psi}
+\end{equation*}
+
+Before taking a look at $U$ itself, this equation reveals a fundamental restriction of $A$.
+If $A$ were to increase the norm of $\ket{\psi}$, then there would exist no $B$ to compensate and the construction would be impossible. 
+No matter the amplitude on the auxiliary substate, the norm will always be a positive number which cannot equalize the gain on our desired substate.
+Formally, this means that the spectral norm, which is the maximum singular value, must be less than or equal to 1:
+\begin{equation*}
+    \|A\|_2 = \sigma_{\max}(A) \le 1
+\end{equation*}
+
+With this restriction in place, we can work out our $U$. From how we previously defined $U$'s action on the $\ket{0}\ket{\psi}$ state, it follows that $A$ will be the top-left block and $B$ the bottom-left.
+\begin{align*}
+    U &= \begin{pmatrix} A & C \\ B & D \end{pmatrix} \\
+    \intertext{Imposing that $U$ be unitary, we can parametrize it in terms of $A$:}
+    U &= \begin{pmatrix} A & \sqrt{I - A A^\dagger} \\ \sqrt{I - A^\dagger A} & -A^\dagger \end{pmatrix}
+\end{align*}
+Mathematically, $U$ is known as a Sz.-Nagy dilation of $A$ \cite{szHokefalvi1954contractions}, this particular form beign known as the Schaffer form \cite{schaffer1955unitary}.
+The full derivation can be found in Appendix~\ref{app:Schaffer}
+In Quantum Computing, $U$ is known as a \emph{block encoding} of $A$.
+
+However, this $U$ is still inconvenient for quantum circuits. We need a concrete path of building it from standard quantum gates.
+To do that, we begin by noting that any square matrix $A$ can be decomposed into unitaries:
+\begin{equation*}
+    A = \sum_{j=0}^{k-1} \alpha_j U_j
+\end{equation*}
+with $k$ being the number of unitaries in the decomposition, which depends entirely on the matrix itself.
+Let's take $k=2$ for simplicity, so $A = \alpha_0 U_0 + \alpha_1 U_1$, with $|\alpha_0| + |\alpha_0| = \lambda$.
+We can introduce the coefficients into our state with a gate $P$ applied only on the ancilla qubit:
+\begin{equation*}
+    (P \otimes I)\ket{0}\ket{\psi} = \sqrt{\frac{\alpha_0}{\lambda}}\ket{0}\ket{\psi} + \sqrt{\frac{\alpha_1}{\lambda}}\ket{1}\ket{\psi}
+\end{equation*}
+After this, we can apply $U_0$ and $U_1$ as controlled gates, obtaining the state:
+\begin{equation*}
+    \sqrt{\frac{\alpha_0}{\lambda}}\ket{0}U_0\ket{\psi} + \sqrt{\frac{\alpha_1}{\lambda}}\ket{1}U_1\ket{\psi}
+\end{equation*}
+The crucial step is what happens once we revert $P$, by applying $P^\dagger$:
+\begin{align*}
+    (P^\dagger \otimes I) &\left( \sqrt{\frac{\alpha_0}{\lambda}}\ket{0}U_0\ket{\psi} + \sqrt{\frac{\alpha_1}{\lambda}}\ket{1}U_1\ket{\psi} \right) \\
+    &= \frac{1}{\lambda} \ket{0} A \ket{\psi} + \ket{1} \ket{\Phi^\perp}
+\end{align*}
+with $\ket{\Phi^\perp}$ itself being an unimportant throwaway state. For the full derivation, see Appendix~\ref{app:inverse_prepare}
+
+\begin{figure}[htpb]
+    \centering
+    \begin{quantikz}
+        % Ancilla wire
+        \lstick{$\ket{0}$} & \gate{P} & \octrl{1} & \ctrl{1} & \gate{P^\dagger} & \meter{} \\
+        % Target wire
+        \lstick{$\ket{\psi}$} & \qw & \gate{U_0} & \gate{U_1} & \qw & \qw
+    \end{quantikz}
+    \caption{The Linear Combination of Unitaries circuit.}
+    \label{fig:lcu_circuit}
+\end{figure}
+
+While a block encoding allows us to apply non-unitary transformations, you may notice that having to use ancillas is not the only price paid.
+When a measurement is made, there is a chance of obtaining a result from the unwanted $\ket{1}$ substate.
+In general, the success probability of measuring into the $\ket{0}$ substate depends on how much $A$ reduces the amplitude of $\ket{\psi}$ and the coefficients of the unitaries:
+\begin{equation}
+    p_{\ket{0}} = \frac{\| A \ket{\psi} \|^2}{\lambda^2}
+\end{equation}
 
 \todo{REVISION: add complexity analysis to section 2.3 (Quantum Approaches to CFD)}
 \section{Quantum Approaches to CFD}

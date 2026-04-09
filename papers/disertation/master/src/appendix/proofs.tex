@@ -1,0 +1,61 @@
+\chapter{Detailed Proofs and Derivations}
+This appendix contains the full proofs and derivations skipped in the main text.
+
+\section{Full Schaffer form derivation}
+\label{app:Schaffer}
+\begin{align*}
+    U &= \begin{pmatrix} A & C \\ B & D \end{pmatrix} \\
+    U^\dagger &= \begin{pmatrix} A^\dagger & B^\dagger \\ C^\dagger & D^\dagger \end{pmatrix} \\
+    \intertext{Since $U$ must be unitary, it follows that}
+    U^\dagger U &= \begin{pmatrix} A^\dagger A + B^\dagger B & A^\dagger C + B^\dagger D \\ 
+    C^\dagger A + D^\dagger B & C^\dagger C + D^\dagger D \end{pmatrix} = \begin{pmatrix} I & 0 \\ 0 & I \end{pmatrix} \\
+    \intertext{From the top-left block, we derive $B$:}
+    B^\dagger B &= I - A^\dagger A \implies B = \sqrt{I - A^\dagger A} \\
+    \intertext{To find $C$, we evaluate the other unitarity condition, $U U^\dagger = I$:}
+    U U^\dagger &= \begin{pmatrix} A A^\dagger + C C^\dagger & A B^\dagger + C D^\dagger \\ 
+    B A^\dagger + D C^\dagger & B B^\dagger + D D^\dagger \end{pmatrix} = \begin{pmatrix} I & 0 \\ 0 & I \end{pmatrix} \\
+    \intertext{From the top-left block of this result, we isolate $C$:}
+    C C^\dagger &= I - A A^\dagger \implies C = \sqrt{I - A A^\dagger} \\
+    \intertext{Note that $B$ and $C$ are both Hermitian. Lastly, to solve for $D$, we use the off-diagonal term from $U^\dagger U$:}
+    A^\dagger C + B^\dagger D &= 0 \\
+    A^\dagger \sqrt{I - A A^\dagger} + \sqrt{I - A^\dagger A} \, D &= 0 \\
+    \intertext{It can be proven via the power expansion of $f(x) = \sqrt{1-x}$ and associativity that $A^\dagger \sqrt{I - A A^\dagger} = \sqrt{I - A^\dagger A}A^\dagger$}
+    \sqrt{I - A^\dagger A} A^\dagger + \sqrt{I - A^\dagger A} \, D &= 0 \implies D = -A^\dagger \\
+    \intertext{Yielding the Schaffer form for the Sz.-Nagy dilation}
+    U &= \begin{pmatrix} A & \sqrt{I - A A^\dagger} \\ \sqrt{I - A^\dagger A} & -A^\dagger \end{pmatrix}
+\end{align*}
+
+\section{Action of $P^\dagger$ for the 2-unitary example}
+\label{app:inverse_prepare}
+
+$P$ is defined by its action on the $\ket{0}$ state:
+\begin{equation*}
+    P\ket{0} = \sqrt{\frac{\alpha_0}{\lambda}}\ket{0} + \sqrt{\frac{\alpha_1}{\lambda}}\ket{1}
+\end{equation*}
+
+Typically $\alpha_j$ coefficients are all real, positive numbers. Even if that is not the case initially, it can be enforced by absorbing any phase into the unitary itself:
+\begin{equation*}
+    \alpha_j U_j = (re^{i\theta})U_j = r(e^{i\theta}U_j) = rU_j' = |\alpha_j|U'_j
+\end{equation*}
+
+To determine how $P^\dagger$ acts, we shall inspect the matrix form of $P$. 
+\begin{align*}
+    P = \begin{pmatrix} \sqrt{\frac{\alpha_0}{\lambda}} & c_0 \\ \sqrt{\frac{\alpha_1}{\lambda}} & c_1 \end{pmatrix} \\
+    \intertext{with $c_0$ and $c_1$ being two constants such that the $P$ is unitary. $P\dagger$ is thus:}
+    P^\dagger = \begin{pmatrix} \sqrt{\frac{\alpha_0}{\lambda}} & \sqrt{\frac{\alpha_1}{\lambda}} \\ c_{0}^* & c_{1}^* \end{pmatrix}
+\end{align*}
+
+Applying $P^\dagger$ to $\ket{0}$ and $\ket{1}$:
+\begin{align*}
+    P^\dagger\ket{0} = \begin{pmatrix} \sqrt{\frac{\alpha_0}{\lambda}} & \sqrt{\frac{\alpha_1}{\lambda}} \\ c_{0}^* & c_{1}^* \end{pmatrix} \begin{pmatrix} 1 \\ 0 \end{pmatrix} = \begin{pmatrix} \sqrt{\frac{\alpha_0}{\lambda}} \\ c_{0}^* \end{pmatrix} = \sqrt{\frac{\alpha_0}{\lambda}}\ket{0} + c_{0}^*\ket{1} \\
+    P^\dagger\ket{1} = \begin{pmatrix} \sqrt{\frac{\alpha_0}{\lambda}} & \sqrt{\frac{\alpha_1}{\lambda}} \\ c_{0}^* & c_{1}^* \end{pmatrix} \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} \sqrt{\frac{\alpha_1}{\lambda}} \\ c_{1}^* \end{pmatrix} = \sqrt{\frac{\alpha_1}{\lambda}}\ket{0} + c_{1}^*\ket{1}
+\end{align*}
+
+Substituting these explicit mappings directly:
+\begin{align*}
+    (P^\dagger \otimes I) &\left( \sqrt{\frac{\alpha_0}{\lambda}}\ket{0}U_0\ket{\psi} + \sqrt{\frac{\alpha_1}{\lambda}}\ket{1}U_1\ket{\psi} \right) \nonumber \\
+    &= \sqrt{\frac{\alpha_0}{\lambda}} \left( \sqrt{\frac{\alpha_0}{\lambda}}\ket{0} + c_0^*\ket{1} \right) U_0\ket{\psi} + \sqrt{\frac{\alpha_1}{\lambda}} \left( \sqrt{\frac{\alpha_1}{\lambda}}\ket{0} + c_1^*\ket{1} \right) U_1\ket{\psi} \nonumber \\
+    \intertext{Factoring out the $\ket{0}$ ancilla state reveals the recovered matrix addition:}
+    &= \ket{0} \left( \frac{\alpha_0}{\lambda} U_0 + \frac{\alpha_1}{\lambda} U_1 \right) \ket{\psi} + \ket{1}\ket{\Phi^\perp} \nonumber \\
+    &= \frac{1}{\lambda} \ket{0} A \ket{\psi} + \ket{1}\ket{\Phi^\perp}
+\end{align*}

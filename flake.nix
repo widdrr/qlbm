@@ -39,6 +39,11 @@
             float
             subfig
             pgf          # tikz
+            quantikz     # quantum circuits
+            xargs        # quantikz dep
+            tikz-cd      # quantikz dep
+            xstring      # quantikz dep
+            environ      # quantikz dep
             # cross-references & links
             hyperref
             # code listings
