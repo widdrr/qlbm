@@ -1,17 +1,14 @@
-\chapter{Generic Quantum Lattice Boltzmann Implementation}
+\chapter{Advection-Diffusion QLBM}
 \label{chapter:implementation}
 
 \section{Contributions}
 \label{sec:contributions}
 
-Our QLBM algorithm is based on the work of Wawrzyniak et al. \cite{wawrzyniak2025base}, which in turn builds upon Budinski's original algorithm.
+My QLBM algorithm is heavily based on the work of Wawrzyniak et al. \cite{wawrzyniak2025base}, which in turn builds upon Budinski's original algorithm.
 Their version extends the original algorithm to support nonuniform velocity fields and improves the initialization procedure.
 
-\todo{REVISION: remove "minor numerical differences" — what does that even mean? Also do NOT present the initialization trick as an improvement — in practice it's probably worse}
-For the algorithm itself, our contribution is simplifying the initialization thus slightly reducing the gate count, at the cost of minor numerical differences. The gate count reduction is linear in the number of links.
-
-Unlike all previous implementations we could find, we provide a truly generic, parameterized implementation that can work with any number of dimensions and any arbitrary set of links, including non-standard sets.
-For the implementation we used the Qiskit framework and the Qiskit Aer Statevector simulator \cite{qiskit2024}.
+Unlike all previous implementations I could find, I provide a truly generic, parameterized implementation that can work with any number of dimensions and any arbitrary set of links, including non-standard sets.
+For the implementation I used the Qiskit framework and the Qiskit Aer Statevector simulator \cite{qiskit2024}.
 
 An iteration of the algorithm consists of 4 steps:
 \begin{enumerate}
@@ -63,14 +60,7 @@ The extra states are handled by the collision operator which will update them to
 This choice reduces the gate count and simplifies the implementation.
 
 \paragraph*{Collision}
-Approximating the Advection Diffusion equation using the LBM discretization and using the Bhatnagar-Gross-Krook (BGK) collision operator \cite{bhatnagar1954model}, we can express the collision step as:
-\begin{equation}
-    \Phi_i(x,t) = w_i \Phi_i(x,t)(1 + \frac{\mathbf{e}_i \cdot \mathbf{u}(\mathbf{x},t)}{c_s^2})
-\end{equation}
-
-With $w_i$ being the link weight, $\mathbf{e}_i$ the link velocity, $\mathbf{u}(\mathbf{x},t)$ the velocity field at site $\mathbf{x}$ and time $t$ and $c_s$ the speed of sound.
-
-This operation can be implemented as a diagonal matrix $M$ of size  $2^{m+n} \times 2^{m+n}$, where $m$ is the number of lattice qubits and $n$ is the number of link qubits.
+The BGK collision operator from Equation~\ref{eq:bgk-collision} can be implemented as a diagonal matrix $M$ of size $2^{m+n} \times 2^{m+n}$, where $m$ is the number of lattice qubits and $n$ is the number of link qubits.
 
 We used Qiskit's \texttt{DiagonalGate} to implement these unitaries, which defines a gate by a diagonal matrix.
 

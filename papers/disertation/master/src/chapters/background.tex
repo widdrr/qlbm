@@ -1,4 +1,4 @@
-\chapter{Background and Related Work}
+\chapter{Background}
 \label{chapter:background}
 
 \section{Computational Fluid Dynamics}
@@ -15,6 +15,18 @@ For example, the momentum equation written in conservation form for an incompres
 \end{displaymath}
 where $\rho$ is the fluid density, $\pmb{u}$ is the velocity, $p$ is the pressure, $\pmb{\tau}$ is the viscous stress tensor and $\pmb{a}$ represents body accelerations (external influences).
 
+Another equation commonly used is the \emph{Advection-Diffusion Equation}:
+\begin{equation}
+    \frac{\partial}{\partial t}\Phi = D\nabla^{2}\Phi - \nabla \cdot (\mathbf{u}\Phi)
+    \label{eq:advection-diffusion}
+\end{equation}
+Where $\Phi(x)$ is the scalar field, $D$ is the diffusion coefficient and $\mathbf{u(x)}$ is the velocity field.
+This equation is used to describe systems governed by two phenomena:
+\begin{itemize}
+    \item Diffusion: The scalar quantity disperses across the medium.
+    \item Advection: The scalar quantity moves according to the bulk motion of the medium.
+\end{itemize} 
+Examples of usecases for this equation include heat transfer or the physical transport of pollutants through air/water \cite{stockie2011mathematics}.
 
 Because of the lack of analytical solutions in the general case, numerical methods are required to solve them for simulations.
 The basic approach is to discretize the equations and iteratively solve them in time steps.
@@ -22,15 +34,27 @@ The most common discretization methods are the \emph{Finite Volume Method} (FVM)
 
 Going down, fluids at intermediate scales (mesoscale) are best described by statistical mechanics. Instead of a continuum, the fluid is comprised of statistical ensembles of particles.
 The probability density of these particles evolves according to the \emph{Boltzmann equation}.
-Using the common BGK approximation for particle collisions, the equation is:
-\begin{displaymath}
-    \label{eq:boltzmann}
-    \frac{\partial f}{\partial t} + \frac{\pmb{p}}{m} \cdot \nabla f + \pmb{F} \cdot \frac{\partial f}{\partial p} = \frac{f^{eq} - f}{\tau}
-\end{displaymath}
-where $f$ is the particle distribution function, $\pmb{p}$ is the momentum, $m$ is the mass, $\pmb{F}$ is the body (external) force, $f^{eq}$ is the equilibrium distribution function and $\tau$ is the relaxation time.
+\begin{equation}
+    \label{eq:boltzmann_general}
+    \frac{\partial}{\partial t}f + \frac{\mathbf{p}}{m} \cdot \nabla f + \mathbf{F} \cdot \frac{\partial}{\partial \mathbf{p}}f = \Omega(f)
+\end{equation}
+where $f$ is the particle distribution function, $\pmb{p}$ is the momentum, $m$ is the mass, $\pmb{F}$ is the body (external) force and $\omega(f)$ is the collision operator.
 
+One of the most widespread methods for mesoscale flows is the \emph{Lattice Boltzmann Method} (LBM) \cite{chen1998lattice}, which we detail in the following section.
 
-One of the most widespread methods for mesoscale flows is the \emph{Lattice Boltzmann Method} (LBM) \cite{chen1998lattice}.
+Lastly, microscopic scale flows and interactions are often modeled by individual particles obeying Newton's laws. The most common method for this is the Molecular Dynamics (MD) method \cite{koplik1989molecular}.
+Generally these are less associated with CFD and seldom mentioned in the surrounding discussions, excluding specialized contexts.
+I will not discuss them further in this thesis but they are nonetheless an interesting subject.
+
+All things considered, we can identify two main categories of classical CFD methods:
+\begin{itemize}
+    \item Continuum methods: which numerically solve the partial differential equations governing the system (usually Navier-Stokes).
+    \item Lattice methods - which model fluids as collections of fictitious particles moving on a lattice.
+\end{itemize}
+
+\section{The Lattice Boltzmann Method}
+\label{sec:lbm}
+
 LBMs discretize the space into a lattice and model the evolution of fluid density on each lattice site.
 Velocity is also discretized into a set of allowed directions a particle can move in.
 The common notation used to denote discretization schemas is the DnQm notation, where $n$ is the number of dimensions and $m$ is the number of discrete velocities.
@@ -98,22 +122,43 @@ The common notation used to denote discretization schemas is the DnQm notation, 
 \label{fig:disc}
 \end{figure}
 
-There are two main steps in an iteration of an LBM:
-\begin{enumerate}
-    \item \textbf{Collision} - particles on each lattice site collide and redistribute along the discrete directions. Different collision operators can be used to model different behaviors.
-    \item \textbf{Streaming} - particles move to neighboring lattice sites according to their velocity.
-\end{enumerate}
+The distributions on each lattice site are commonly referred to as \emph{link distributions}.
+Each link distribution has an associated link velocity and represents the proportion of the simulated quantity that will propagate along that link.
+
+The evolution of the discrete distribution function $f_i$ at position $\mathbf{x}$ and time $t$ is governed by the Discrete Boltzmann Equation:
+\begin{equation}
+    f_i(\mathbf{x} + \mathbf{e}_i \Delta t, t + \Delta t) = f_i(\mathbf{x}, t) + \Omega_i(f)
+    \label{eq:lbe_full}
+\end{equation}
+where $\mathbf{e}_i$ are the discrete lattice velocities and $\Omega_i$ is the collision operator.
+
+In a numerical simulation, this is usually done in two distinct steps
+
+\paragraph{1. Collision Step:}
+the distributions are modified by the collision operator, which encodes the specific mesoscale behavior of the system being modeled
+\begin{equation}
+    f_i^*(\mathbf{x}, t) = f_i(\mathbf{x}, t) + \Omega_i(f)
+    \label{eq:collision_general}
+\end{equation}
+
+Various collision operators exist for different scenarios, but the most commonly used one is the Bhatnagar-Gross-Krook (BGK) operator \cite{bhatnagar1954model}.
+This model assumes that the distributions relax toward a local equilibrium state, $f_i^{\text{eq}}$, over a relaxation time $\tau$:
+\begin{equation}
+    \Omega_i^{\text{BGK}} = -\frac{\Delta t}{\tau} \left[ f_i(\mathbf{x}, t) - f_i^{\text{eq}}(\mathbf{x}, t) \right]
+    \label{eq:bgk_operator}
+\end{equation}
+
+\paragraph{2. Streaming Step:}
+the post-collision distributions are propagated to adjacent nodes according to their respective link velocity vectors:
+\begin{equation}
+    f_i(\mathbf{x} + \mathbf{e}_i \Delta t, t + \Delta t) = f_i^*(\mathbf{x}, t)
+    \label{eq:streaming}
+\end{equation}
+
+Finally, the link distributions are summed up in order to recover the macroscopic distribution.
+
+
 Despite being developed from a mesoscale perspective, LBMs can be used for large flows as well \cite{sharma2020current}.
-
-Lastly, microscopic scale flows and interactions are often modeled by individual particles obeying Newton's laws. The most common method for this is the Molecular Dynamics (MD) method \cite{koplik1989molecular}.
-Generally these are less associated with CFD and seldom mentioned in the surrounding discussions, excluding specialized contexts.
-I will not discuss them further in this thesis but they are nonetheless an interesting subject.
-
-All things considered, we can identify two main categories of classical CFD methods:
-\begin{itemize}
-    \item \textbf{Continuum methods} - which numerically solve the partial differential equations governing the system (usually Navier-Stokes).
-    \item \textbf{Lattice methods} - which model fluids as collections of fictitious particles moving on a lattice.
-\end{itemize}
 
 \section{Quantum Computing Fundamentals}
 \label{sec:qc-basics}
@@ -190,7 +235,7 @@ It is described by the following transformations to the 2-qubit computational ba
     \text{CNOT} \ket{11} &= \ket{10}
 \end{aligned}
 \end{equation*}
-This is the \emph{Conditional-NOT gate}, negating the second qubit if and only if the first is $ket{1}$.
+This is the \emph{Conditional-NOT gate}, negating the second qubit if and only if the first is $\ket{1}$.
 The first qubit is called the \emph{control} with the second being the \emph{target}
 This pattern is common and many single qubit gates have \emph{controlled} versions.
 
@@ -321,7 +366,6 @@ In general, the success probability of measuring into the $\ket{0}$ substate dep
     p_{\ket{0}} = \frac{\| A \ket{\psi} \|^2}{\lambda^2}
 \end{equation}
 
-\todo{REVISION: add complexity analysis to section 2.3 (Quantum Approaches to CFD)}
 \section{Quantum Approaches to CFD}
 \label{sec:qcfd}
 
@@ -337,7 +381,7 @@ Unlike the early work, newer research was more focused on using the aforemention
 The QLGA was not abandoned, however, and like its classical counterpart it evolved into the \emph{Quantum Lattice Boltzmann Method} (QLBM) \cite{budinski2021quantum, itani2024quantum}.
 
 Mirroring the classical approaches, quantum algorithms for CFD also fall under the two categories of continuum and lattice methods.
-Subsequently, I will discuss a couple of quantum algorithms for CFD, focusing on the ones most representative of their category.
+Subsequently, I will discuss a couple of quantum algorithms for CFD.
 
 \paragraph*{Quantum Navier-Stokes Solver}
 In 2020 Gaitan published a quantum algorithm for solving the Navier-Stokes equations \cite{gaitan2020finding}.
@@ -400,9 +444,7 @@ Even ignoring the proposed algorithm's current limitations, the Schrödinger Flo
 Despite being able to model some turbulent flows it is not yet a universal model for all fluid flows.
 
 \paragraph*{Quantum Lattice Boltzmann Methods}
-In the classical Lattice Boltzmann Method, we discretize space and velocity and try to model the \emph{fluid density}.
-The function $f_{i}(x,t)$ denotes the "amount" of fluid moving in direction $i$ at position $x$ and time $t$.
-Unsurprisingly, summing over $i$ gives the fluid density at lattice site $x$ and time $t$.
+As previously discussed, in the Classical LBM, the distribution function describes the proportion of particles moving in a specific direction.
 There is however an alternative way to interpret this function, one that better leads to \emph{Quantum Lattice Boltzmann Methods} (QLBMs).
 
 Instead of thinking about many particles moving in different directions, we can imagine a single particle that has different \emph{probabilities} of moving in different directions.
@@ -441,12 +483,14 @@ where $\alpha$ is $1$ or $2$ for the two different velocities and $i$ is the lat
 The encoding can be generalized to other lattice schemas.
 
 This encoding looks similar to the first encoding presented, but the auxiliary qubit is very important.
-That qubit allows Budinski to implement the normally non-unitary collision operator as a \textbf{block encoding}\footnote{A block encoding is a way to embed a non-unitary matrix into a larger unitary matrix.}.
+That qubit allows Budinski to implement the normally non-unitary collision operator as a block encoding.
 
-The propagation step is implemented similar to a \textbf{Quantum Walk} \cite{childs2009universal}, by shifting the qubits left and right respectively.
+The propagation step is implemented similar to a quantum walk \cite{childs2009universal}, by shifting the qubits left and right respectively.
 
-Budinski tested his QLBM by simulating a simple diffusion using both D1Q2 and D2Q5 lattices.
+Budinski tested his QLBM by simulating a simple adevction-diffusion using both D1Q2 and D2Q5 lattices.
 The results match both analytical solutions and classical simulations.
+
+He later extended the method to the Navier-Stokes equations \cite{ljubomir2022quantum} via the stream-vorticity formulation and validated his results in a lid-driven cavity flow simulation.
 
 For a DmQn lattice with M sites, the complexity analysis of this algorithm shows it is logarithmic in the number of lattice sites: $O(n\log(mM))$. This is a significant speedup over classical Lattice Boltzmann Methods which are linear.
 Unfortunately this QLBM has a crucial limitation: each time step requires measurements and a new initialization of the state.
@@ -455,41 +499,3 @@ It is especially oppressive as the encoding (which was excluded from the above c
 There are more recent developments that try to solve these problems.
 For instance, Kocherla et al. proposed a QLBM that can delay the need for measurements until the end of the simulation \cite{kocherla2024fully}.
 
-\todo{REVISION: merge section 2.4 (Advection-Diffusion QLBM) into section 2.3 (Quantum Approaches to CFD)}
-\section{The Advection-Diffusion QLBM}
-\label{sec:qlbm-detail}
-
-The QLBM, as the name suggests, is the quantum version of the classical Lattice Boltzmann Method (LBM) algorithm.
-
-LBMs work by discretizing space into a lattice structure, where each lattice site contains a set of \textbf{link distributions}.
-Each link distribution has an associated link velocity and represents the proportion of the simulated quantity that will propagate along that link.
-Discretization schemes are named after the number of dimensions and the number of links: D1Q3 for 1D with 3 links, D2Q9 for 2D with 9 links, D3Q27 for 3D with 27 links.
-
-An iteration of the algorithm consists of two main steps:
-\begin{enumerate}
-    \item \textbf{Collision:} The values of the link distributions are updated based on a \textbf{collision operator}. The specific operator depends on details of the simulated behavior.
-    \item \textbf{Streaming:} The distribution values are propagated to neighboring sites based on the defined link velocities.
-\end{enumerate}
-
-Finally, the link distributions are summed up in order to recover the macroscopic distribution.
-
-One of the earliest implementations of a QLBM was proposed by Budinski \cite{budinski2021quantum}.
-He proposed a quantum circuit that could simulate flows governed by the \textbf{advection-diffusion equation}:
-
-\begin{equation}
-    \partial_t\Phi = D\nabla^{2}\Phi - \nabla(\mathbf{u}\Phi)
-\end{equation}
-
-Where $\Phi(x)$ is the distribution function, $D$ is the diffusion coefficient and $\mathbf{u(x)}$ is the velocity field.
-
-He later extended the method to the Navier-Stokes equations \cite{ljubomir2022quantum} via the stream-vorticity formulation and validated his results in a lid-driven cavity flow simulation.
-
-Unfortunately, this matrix is not unitary, but we can circumvent this by using a technique called \textbf{Linear Combination of Unitaries} \cite{childs2012hamiltonian}.
-We can express $M$ as $\frac{1}{2}(U_1 + U_2)$ with $U_1 = M + i\sqrt{I - M^2}$ and $U_2 = M - i\sqrt{I - M^2}$.
-
-These matrices are both unitary and can be implemented as quantum gates.
-
-To apply the desired linear combination, we utilize an ancilla qubit prepared in the state $\ket{0} + \ket{1}$.
-Then we apply each of the unitaries conditioned on the $\ket{0}$ and $\ket{1}$ states of the ancilla qubit, respectively.
-Other than the ancilla, the drawback of this method is that our desired result is only present in the $\ket{0}$ substate.
-This is not a problem when performing Statevector simulations, but it increases the number of shots required for running the algorithm on a real quantum computer.
