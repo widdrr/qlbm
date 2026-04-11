@@ -15,14 +15,10 @@ A quantum speedup for CFD simulations could have significant impact, assuming a 
 
 Among the various methods explored in the literature, the Quantum Lattice Boltzmann Method (QLBM) is a promising candidate with several groups actively researching it \cite{budinski2021quantum,itani2024quantum,kocherla2024fully, xu2025improved, tiwari2025algorithmic,wawrzyniak2025base}.
 The QLBM, as the name suggests, is a variant of the classical Lattice Boltzmann Method for CFD designed to run on quantum computers.
-The standard LBM steps: Collision, Streaming and Boundary Conditions; are transformed into quantum gates and circuits with the goal of achieving better time and memory complexities via quantum parallelism and superposition.
+The standard LBM steps: Collision, and Streaming are transformed into quantum gates and circuits with the goal of achieving better time and memory complexities via quantum parallelism and superposition.
 
 In this thesis, I present a fully generic and parameterized implementation of a QLBM simulator with support for arbitraty velocity sets and in-lattice boundary conditions.
 Previous research hardcoded specific boundary conditions, such as bounce-back, directly into the circuit.
 My simulator allows for more flexibility by defining boundary conditions locally for each individual site. The only restrictions is that they must be linear and norm-preserving.
 As of the time of writing, and to the best of my knowledge, this is the only such implementation available.
 
-I validate the simulator against a classical implementation on several scenarios for the \emph{Advection-Diffusion Equation}.
-I evaluate the numerical error between the simulations as well as benchmark the runtime and resource utilization.
-
-Lastly, I explore and discuss the current limitations, both of my implementation and of the QLBM as a whole.
