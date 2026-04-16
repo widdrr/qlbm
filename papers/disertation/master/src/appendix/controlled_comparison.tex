@@ -1,0 +1,37 @@
+\chapter{Controlled-Collision Construction Benchmarks}
+\label{app:controlled_comparison}
+
+After implementing boundary conditions, I ran into very slow simulations that were impractical to run.
+Analyzing the runtime, I managed to isolate the bottleneck to the controlled unitaries in the collision step.
+On a whim I decided to try implementing the controlled gate by manually building the matrix via Kronecker-product construction and apply it as a single \texttt{UnitaryGate}.
+To my surprise, this sped up simulation quite a bit.
+
+Performing a detailed benchmark revealed the explanation: \texttt{UnitaryGate} is considered elementary in the default Aer Simulator.
+This means it won't get transpiled and it will be applied via simple vector-matrix multiplication.
+Transpiling against a more realistic elementary gate set, like the IBM Eagle's, shows that the two approaches are almost identical in gate count and circuit depth.
+Surprisingly, for diagonal gates, the manual approach still appeared to result in a 4x decrease in depth.
+
+\begin{table}[H]
+\centering
+\caption{Gate count / depth transpilation comparison and runtime}
+\label{tab:controlled_comparison}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l c r r r r r r}
+\toprule
+ & & \multicolumn{2}{c}{Eagle basis} & \multicolumn{2}{c}{Default (Aer) basis} & \multicolumn{2}{c}{Runtime (ms)} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
+Operator & Qubits & \texttt{.ctrl} & manual & \texttt{.ctrl} & manual & \texttt{.ctrl} & manual \\
+\midrule
+\multicolumn{8}{l}{\emph{Diagonal} (collision without BC)} \\
+Random phase diagonal & 4 & 281 / 206       & 66 / 55       & 46 / 43        & 1 / 1 & 2.0    & 0.7     \\
+Random phase diagonal & 6 & 1,197 / 916     & 258 / 241     & 190 / 185      & 1 / 1 & 4.3    & 1.8     \\
+Random phase diagonal & 8 & 4,849 / 3,786   & 1,026 / 1,004 & 766 / 759      & 1 / 1 & 14.9   & 28.8    \\
+\midrule
+\multicolumn{8}{l}{\emph{General unitary} (collision combined with BC, post-SVD)} \\
+Random unitary   & 4 & 1,158 / 724     & 1,156 / 724   & 635 / 467      & 1 / 1 & 11.9   & 0.6     \\
+Random unitary   & 6 & 19,208 / 12,292 & 19,206 / 12,292 & 10,845 / 8,195 & 1 / 1 & 201.7  & 1.0     \\
+Random unitary   & 8 & 310,282 / 199,684 & 310,279 / 199,683 & 176,479 / 134,147 & 1 / 1 & 3,666.1 & 19.0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
