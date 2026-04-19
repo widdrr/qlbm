@@ -68,7 +68,7 @@ From the Advection-Diffusion Equation (\ref{eq:advection-diffusion}), we can obt
 \begin{equation}
     f_i^{eq} = w_i \Phi \left( 1 + \frac{\mathbf{c}_i \cdot \mathbf{u}(\mathbf{x},t)}{c_s^2} \right),
 \end{equation}
-with $w_i>0$ being the link weight, $c_i$ being the link velocity and $c_s$ a constant representing the speed of sound in the medium.
+with $w_i>0$ being the link weight, $c_i$ being the link velocity and $c_s$ a constant representing the speed of sound in the medium \cite{timm2016lattice}.
 In order to correctly approximate the ADE, these parameters must always obey:
 \begin{align}
     \sum_{i} w_i &= 1 \\
@@ -76,24 +76,22 @@ In order to correctly approximate the ADE, these parameters must always obey:
     \sum_{i} w_i \mathbf{c}_{i\alpha} \mathbf{c}_{i\beta} &= c_s^2 \delta_{\alpha\beta} \\
 \end{align}
 
-The full derivation can be found in Appendix \todo{decide to add this or not}
-
-Since we encode $\Phi$ in the uniform superposition of the initial state, we can be implement the collision as a single diagonal matrix $M$ of size $2^{m+n} \times 2^{m+n}$, where $m$ is the number of lattice qubits and $n$ is the number of link qubits.
+Since $\Phi$ is encoded in the amplitudes of the lattice qubits and the link qubits are in a uniform superposition, collision can be implemented as a single diagonal matrix $M$ of size $2^{m+n} \times 2^{m+n}$, where $m$ is the number of lattice qubits and $n$ is the number of link qubits.
 \begin{equation*}
     M = \begin{pmatrix} 
     w_0 \left( 1 + \frac{\mathbf{c}_0 \cdot \mathbf{u}(\mathbf{x}_0,t)}{c_s^2} \right) & 0 & \dots & 0 \\
     0 & w_0 \left( 1 + \frac{\mathbf{c}_0 \cdot \mathbf{u}(\mathbf{x}_1,t)}{c_s^2} \right) & \dots & 0 \\
     \vdots & \vdots & \ddots & \vdots \\
-    0 & 0 & \dots & w_{Q-1} \left( 1 + \frac{\mathbf{c}_{Q-1} \cdot \mathbf{u}(\mathbf{x}_N,t)}{c_s^2} \right) 
+    0 & 0 & \dots & w_{Q-1} \left( 1 + \frac{\mathbf{c}_{Q-1} \cdot \mathbf{u}(\mathbf{x}_{N-1},t)}{c_s^2} \right) 
     \end{pmatrix}
 \end{equation*}
 
 Assuming the simulation parameters are chosen accordingly, this matrix will conserve the $L_1$ norm of the state, corresponding to the conservation of mass.
 This however is not sufficient in a quantum circuit, as preserving the $L_2$ norm is the requirement for unitarity.
 
-Fortunately we can implement this as a block encoding, by writing
-$M$ as a linear combination of unitaries $\frac{1}{2}(U_0 + U_1)$ with $U_0 = M + i\sqrt{I - M^2}$ and $U_1 = M - i\sqrt{I - M^2}$.
-\todo{detailed derivation in appendix or here?}
+Fortunately it can still be implemented as a block encoding, by writing
+$M$ as a linear combination of unitaries $\frac{1}{2}(U_0 + U_1)$ with $U_0 = M + i\sqrt{I - M^2}$ and $U_1 = M - i\sqrt{I - M^2}$ \cite{low2019hamiltonian}.
+The fact that the collision operator is diagonal is essential for this construction. More details in Appendix~\ref{app:collision_lcu}
 
 Generally speaking, if the parameters respect the necessary preconditions to recover the ADE, then $M$ will be contractive, making the LCU technique possible. 
 I used Qiskit's \texttt{DiagonalGate} to implement these unitaries.
@@ -121,6 +119,7 @@ The basic operation is shifting the amplitudes of a quantum state left or right,
 
 Conditionally applying these gates based on the binary encoding of the link index allows propagation of the link distributions for any arbitrary link velocity vector.
 For example, to perform streaming by the velocity vector $(2,-1)$, one would apply the $RGate$ twice to the qubits encoding the first dimension and the $LGate$ once to the qubits encoding the second dimension.
+These circuits "wrap" around upon reaching the boundary state, naturally implementing periodic boundary conditions.
 
 \paragraph*{Computing Macroscopic Quantities}
 
@@ -259,12 +258,18 @@ Iteration & Init.\ Gates & Total Gates \\
 \label{sec:validation}
 
 To validate my implementation, I performed a series of experiments with various configurations and compared the results against classical simulations.
-All code is open source and available at \url{https://github.com/widdrr/qlbm}
+I could not find an existing classical simulator that would produce an output in a similar format, so I implemented a basic one.
+The classical simulator follows the same collision formulas but avoids the pitfall of simply reimplementing the quantum algorithm as vector-matrix multiplication.
+The speed of sound was the same in all experiments $c_s=\frac{1}{\sqrt{3}}$.
+
 The full RMSE plots for all experiments are available in Appendix \ref{app:rmse}.
+All code is open source and available at \url{https://github.com/widdrr/qlbm}
 
 \paragraph*{1D Simulation}
-The QLBM configuration used was a standard 1DQ3 with 32 lattice sites.
-The initial distribution is a simple Gaussian hill and the velocity field is a constant $u=0.3$.
+The QLBM configuration used was a standard D1Q3 with 32 lattice sites, simulated for 50 iterations.
+The link set is $\{(0), (-1), (1)\}$ with weights $\{2/3, 1/6, 1/6\}$.
+The initial distribution is a Gaussian hill of amplitude 0.9 centered at $x=8$ with width $\sigma=2$. The background density is 0.1.
+The velocity field is a constant $u=0.3$ causing a rightward advection.
 
 \begin{figure}[H]
     \centering
@@ -273,11 +278,13 @@ The initial distribution is a simple Gaussian hill and the velocity field is a c
     \label{fig:1d_comparison}
 \end{figure}
 
-This experiment showed exact agreement between the quantum and classical simulations, with the RMSE in the order of $10^{-13}$ attributed to numerical errors.
+This experiment showed exact agreement between the quantum and classical simulations, with the RMSE in the order of $10^{-14}$ attributed to machine precision.
 
 \paragraph*{2D Simulation}
-The QLBM configuration used was a standard 2DQ9 with $32 \times 16$ lattice sites.
-The initial distribution is a ring of higher density and the velocity field consists of constant $u = 0.2$ in the bottom half and $u=-0.2$ in the top half with a constant $v=0.1$.
+The QLBM configuration used was a standard D2Q9 with $32 \times 16$ lattice sites, simulated for 40 iterations.
+The link set is $\{(0,0), (\pm1, 0), (0, \pm1), (\pm1, \pm1)\}$ with weights $4/9$ for the stationary, $1/9$ for the orthogonal and $1/36$ for the diagonal links.
+The initial distribution is a ring of amplitude $0.9$ centered in the grid, with outer radius $4$, inner radius $2$. The background density is $0.1$.
+The velocity field consists of a constant $u = 0.2$ in the bottom half and $u=-0.2$ in the top half with a constant $v=0.1$, creating a shear field.
 
 \begin{figure}[H]
     \centering
@@ -286,11 +293,13 @@ The initial distribution is a ring of higher density and the velocity field cons
     \label{fig:2d_snapshots}
 \end{figure}
 
-Once again, the numerical differences are negligible at $10^{-13}$.
+Once again, the numerical differences are negligible at $10^{-14}$.
 
 \paragraph*{3D Simulation}
-The QLBM configuration used was a standard 3DQ27 with $8 \times 8 \times 8$ lattice sites.
-The initial distribution is three perpendicular planes of higher density and the velocity field follows the pattern:
+The QLBM configuration used was a standard D3Q27 with $8 \times 8 \times 8$ lattice sites, simulated for 10 iterations.
+The link set is the rest vector, the six axial neighbors, the twelve edge neighbors and the eight corner neighbors, with weights $8/27$, $2/27$, $1/54$ and $1/216$ respectively.
+The initial distribution is three single-cell perpendicular planes through the center of the grid, with density $0.9$ on the planes and background density $0.1$ elsewhere.
+The velocity field follows the pattern:
 
 \begin{align}
     u(x,y,z) &= A \cos(ax)\sin(by)\sin(cz) \\
@@ -299,6 +308,7 @@ The initial distribution is three perpendicular planes of higher density and the
 \end{align}
 
 With $A=B=C=0.2$ as the velocity amplitudes and $a=b=c=1.0$ as the spatial frequencies.
+This is the parametrization for a Taylor-Green Vortex, a classic benchmark for LBMs.
 
 \begin{figure}[H]
     \centering
@@ -306,17 +316,18 @@ With $A=B=C=0.2$ as the velocity amplitudes and $a=b=c=1.0$ as the spatial frequ
     \caption{Isosurface evolution of the 3D simulation with non-uniform velocity field}
     \label{fig:3d_snapshots}
 \end{figure}
-The RMSE for this simulation is considerably higher at around $10^{-5}$, but still within acceptable limits.
-This is attributed to the more complex velocity field.
+This simulation shows the highest RMSE of around $10^{-4}$.
+This is attributed to the more complex velocity field, but I have yet to find the exact explanation.
+\todo{investigate further}
 
 \paragraph*{2D Simulation with Non-Standard Link Velocities}
 The number of lattice sites is $32 \times 32$.
-The initial distribution is a cross of higher density.
+The initial distribution is a cross with lines $4$ cells wide, with density $0.9$ on the cross and background density $0.1$ elsewhere.
 
 The configuration changes during the simulation in the following manner:
 \begin{itemize}
-    \item For the first 15 iterations, the standard 2DQ9 link velocities are used and the velocity field is a clockwise rotation vortex of magnitude $u=0.5$.
-    \item For the next 10 iterations, the velocity field disappears and the link velocities are changed to the non-standard set $[(0,0), (2,1), (-2,-1)]$, restricting propagation to a single diagonal direction.
+    \item For the first 15 iterations, the standard D2Q9 link set and weights ($4/9$, $1/9$, $1/36$) are used and the velocity field is a clockwise rotation vortex of magnitude $u=0.5$.
+    \item For the next 10 iterations, the velocity field disappears and the link velocities are changed to the non-standard set $\{(0,0), (2,1), (-2,-1)\}$ with weights $\{2/3, 1/6, 1/6\}$, restricting propagation to a single diagonal direction.
 \end{itemize}
 
 You may notice that the the final 10 iterations have parameters that no longer recover the ADE.
@@ -331,5 +342,6 @@ Such behavior is called \emph{anisotropic transport}.
     \label{fig:cross_snapshots}
 \end{figure}
 
-This simulation shows the highest RMSE of around $10^{-4}$. The more interesting part is that once the velocity field disappears at $t=15$, the error starts to decrease, as seen in Appendix \ref{app:rmse}.
+The RMSE for this simulation is also considerably higher, at $10^{-5}$. The more interesting part is that once the velocity field disappears at $t=15$, the error starts to decrease, as seen in Appendix \ref{app:rmse}.
 This supports the hypothesis that the error is due to complex velocity fields.
+

@@ -4,48 +4,75 @@
 In an LBM simulation, enforcing boundary conditions involves determining unknown incoming distributions at boundary nodes based on known outgoing distributions and other auxiliary information.
 Depending on how the boundary is encoded into the lattice, LBM simulators distinguish between
 \begin{itemize}
-    \item \textbf{Wet-Nodes} The boundary conditions are applied directly on the fluid nodes at the boundary. This is usually done after streaming.
-    \item \textbf{Link-Wise} The boundary conditions are applied between fluid nodes and solid nodes. This is usually done during streaming.
+    \item Wet-Nodes: The boundary conditions are applied directly on the fluid nodes at the boundary.
+    \item Link-Wise: The boundary conditions are applied between fluid nodes and solid nodes.
 \end{itemize} \cite{olbug:18}.
 
+Most of the existing literature opts to implement specific link-wise boundary conditions, such as bounce-back, directly in the circuit \cite{ljubomir2022quantum,jennings2026simulating,lee2025advanced}.
+This approach benefits from being able to efficiently embed simple conditions directly into the circuit.
+
+For my simulator I wanted to try a fully parametrized approach, able to be customized for a large class of boundary conditions, then evaluate the incured cost of generality.
 \section{Linear Boundary Formulation}
 \label{sec:bc-formulation}
 
 Due to the linear constraints of quantum operations, I focused on modeling the unknown distributions as linear combinations of the known distributions at the boundary nodes.
 This is a well known wet-node approach, detailed by \cite{zou1997pressure}.
-Additionally, due to the norm-preserving nature of quantum operations, I restrict myself to boundary conditions that preserve the total density at the boundary node.
+Additionally I have chosen to only consider boundary conditions that preserve the total quantity at the boundary node.
 Mathematically, this can be expressed as:
 
-\begin{equation}
-f_i^{in} = \sum_j B_{ij} f_j^{out}
-\end{equation}
+\begin{align*}
+& f_i^{post}(x) = \sum_j B_{x}^{ij} f_j^{pre}(x) \\
+\intertext{or in matrix form}
+& \mathbf{f}^{post}(x) = B_x \cdot \mathbf{f}^{pre}(x)
+\intertext{with the required quantity conservation property}
+& \sum_i f_{i}^{post} = \sum_i f_{i}^{pre}
+\end{align*}
+where $x$ is the lattice site, $f_i$ the distribution for link $i$ and $B_x$ the boundary condition operator for site x.
 
-Or in matrix form:
+From the quantity preservation restriction, it follows that for each $B_x$ all columns sum up to 1, making them left-stochastic matrices.
+Each $B_x$ can be embedded in a larger operator $B$, describing all boundary conditions for the entire lattice.
+Simplest way to imagine it is to start with a block-diagonal containing all defined $B_x$, with $I$ instead for non-boundary lattices.
+
 \begin{equation}
-\mathbf{f}^{in} = B \cdot \mathbf{f}^{out}
+B = \begin{pmatrix}
+    B_0    & 0      & \dots  & \dots  & 0 \\
+    0      & B_1    & \ddots &        & \vdots \\
+    \vdots & \ddots & I    & \ddots & \vdots \\
+    \vdots &        & \ddots & I      & 0 \\
+    0      & \dots  & \dots  & 0      & B_{N-1}
+\end{pmatrix}
 \end{equation}
+From the construction we can see it is also stochastic. This is important to ensure the stability of the simulation.
+
+
+Because of the chosen quantum state encoding, link distributions for a given site are not adjacent in the vector representation of the quantum state; instead all distributions of a given link are adjacent.
+The real $B$ matrix will however be a permutation of the block-diagonal variant, meaning all relevant properties are invariant, such as eigenvalues and stochasticity.
 
 \section{Quantum Implementation via LCU and SVD}
 \label{sec:bc-implementation}
 
-Since the boundary matrix $B$ is generally non-unitary, it cannot be directly implemented as a quantum gate.
-To address this, I employ the Linear Combination of Unitaries (LCU) technique \cite{childs2012hamiltonian}.
-This is already used in many QLBM implementations to handle the collision step \cite{budinski2021quantum}.
-Because the collision operator is diagonal, it was straightforward to express it as a linear combination of two unitaries:
-\begin{equation}
+Since the boundary operator $B$ is generally non-unitary, it cannot be directly implemented as a quantum gate.
+To address this, I once again employ the LCU technique.
+As established, a diagonal, real-valued operator is straightforward to express as a linear combination of two unitaries:
+\begin{equation*}
 C = \frac{1}{2} (C + i\sqrt{I - C^2}) + \frac{1}{2}(C - i\sqrt{I - C^2})
-\end{equation}
+\end{equation*}
 
-The Boundary operator $B$ is unfortunately not diagonal.
-For simplicity, I opted to decompose it using Singular Value Decomposition (SVD):
+The only issue is that $B$ is not diagonal.
+Thankfully, we can perform Singular Value Decomposition (SVD):
 \begin{equation}
     B = U \Sigma V^{\dagger}
 \end{equation}
-where $U, V$ are unitary and $\Sigma$ is diagonal. Using this fact, $\Sigma$ can be decomposed as a linear combination of two unitaries, and $U$ and $V^{\dagger}$ distributed to obtain a linear combination for $B$:
+where $U, V$ are unitary and $\Sigma$ is diagonal.
+Critically, the SVD algorithm ensures $\Sigma$ will also be real-valued (positive semidefinite in fact).
+Using these facts, $\Sigma$ can be decomposed as a linear combination of two unitaries, and $U$ and $V^{\dagger}$ distributed to obtain a linear combination for $B$:
 \begin{equation}
     B = \frac{1}{2} (U (\Sigma + i\sqrt{I - \Sigma^2}) V^{\dagger} + U (\Sigma - i\sqrt{I - \Sigma^2}) V^{\dagger})
 \end{equation}
-This allows implementing $B$ using one ancilla qubit with a 50\% success probability.
+
+Note however that unlike with the collision operator we do not have any guarantees $\Sigma$ will be contractive.
+To solve this, I took the simplest approach possible and normalized $\Sigma$ via dividing by its spectral norm.
+This scaling is irelevant to our overall algorithm, thanks to the renormalization performed at the end of each simulation step.
 
 \section{Circuit Optimization}
 \label{sec:bc-optimization}

@@ -19,6 +19,6 @@ The standard LBM steps: Collision, and Streaming are transformed into quantum ga
 
 In this thesis, I present a fully generic and parameterized implementation of a QLBM simulator with support for arbitraty velocity sets and in-lattice boundary conditions.
 Previous research hardcoded specific boundary conditions, such as bounce-back, directly into the circuit.
-My simulator allows for more flexibility by defining boundary conditions locally for each individual site. The only restrictions is that they must be linear and norm-preserving.
+My simulator allows for more flexibility by defining boundary conditions locally for each individual site. The only restrictions is that they must be linear and left-stochastic.
 As of the time of writing, and to the best of my knowledge, this is the only such implementation available.
 

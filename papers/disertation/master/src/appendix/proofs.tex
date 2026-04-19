@@ -59,3 +59,53 @@ Substituting these explicit mappings directly:
     &= \ket{0} \left( \frac{\alpha_0}{\lambda} U_0 + \frac{\alpha_1}{\lambda} U_1 \right) \ket{\psi} + \ket{1}\ket{\Phi^\perp} \nonumber \\
     &= \frac{1}{\lambda} \ket{0} A \ket{\psi} + \ket{1}\ket{\Phi^\perp}
 \end{align*}
+
+\section{Proof of Collision Operator Decomposition}
+\label{app:collision_lcu}
+
+Given a diagonal, real, and contractive collision matrix $M$, it can be decomposed as:
+
+\begin{align*}
+    M &= \frac{1}{2}(U_0 + U_1) \\
+    \intertext{where the unitary operators are defined as:}
+    U_0 &= M + i\sqrt{I - M^2} \\
+    U_1 &= M - i\sqrt{I - M^2}
+\end{align*}
+This particular construction if defined, albeit in a different form, in Low and Chang's Qubitization Framework \cite{low2019hamiltonian}.
+
+First of all, to prove this construction recovers $M$, simple matrix algebra is enough
+
+\begin{align*}
+    \frac{1}{2}(U_0 + U_1) &= \frac{1}{2} \left( \left[M + i\sqrt{I - M^2}\right] + \left[M - i\sqrt{I - M^2}\right] \right) \\
+    &= \frac{1}{2} \left( 2M + i\sqrt{I - M^2} - i\sqrt{I - M^2} \right) \\
+    &= M
+\end{align*}
+
+Next we need to prove that $U_0$ and $U_1$ are indeed unitary.
+We'll focus on $U_0$ and show that $U_0^\dagger U_0 = U_0 U_0^\dagger = I$.
+
+Because $M$ is both real-valued and diagonal, it follows that $M$ is Hermitian ($M = M^\dagger$).
+Additionally it is also contractive ($\|M\|_2 = \sigma_{\max}(M) \le 1$), meaning $\sqrt{I-M^2}$ is also Hermitian.
+We then have:
+\begin{align*}
+    U_0^\dagger &= (M + i\sqrt{I-M^2})^\dagger \\
+    &= M^\dagger - i(\sqrt{I - M^2})^\dagger \\
+    &= M - i\sqrt{I - M^2}
+\end{align*}
+
+Calculating the product:
+
+\begin{align*}
+    U_0^\dagger U_0 &= \left( M - i\sqrt{I - M^2} \right) \left( M + i\sqrt{I - M^2} \right) \\
+    &= M^2 + iM\sqrt{I - M^2} - i\sqrt{I - M^2}M + \left( \sqrt{I - M^2} \right)^2
+\end{align*}
+
+Since both $M$ and $\sqrt{I-M^2}$ are diagonal, they commute, causing the cross-terms to vanish:
+
+\begin{align*}
+    U_0^\dagger U_0 &= M^2 + (I - M^2) \\
+    &= I
+\end{align*}
+
+The exact same logic is used to show that $U_0 U_{0}^\dagger = I$.
+The entire process is repeated for $U_1$.
