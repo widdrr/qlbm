@@ -106,7 +106,7 @@ def collision_nonuniform(
     target_qubits = list(range(ancilla))
 
     if collision_matrix.ndim == 1:
-        diagonal = collision_matrix
+        diagonal = collision_matrix / np.max(np.abs(collision_matrix))
         unitary_1 = list(diagonal + 1.j * np.sqrt(1 - np.square(diagonal)))
         unitary_2 = list(diagonal - 1.j * np.sqrt(1 - np.square(diagonal)))
 

@@ -74,66 +74,232 @@ Note however that unlike with the collision operator we do not have any guarante
 To solve this, I took the simplest approach possible and normalized $\Sigma$ via dividing by its spectral norm.
 This scaling is irelevant to our overall algorithm, thanks to the renormalization performed at the end of each simulation step.
 
-\section{Circuit Optimization}
+Lastly, boundary nodes should be exempt from the normal collision operator. In a way, the boundary condition can be thought of as a special collision operator for that node.
+Mathematically, this translates in replacing the corresponding entries in the collision operator with identities.
+\section{Pre-Streaming Boundary Conditions}
 \label{sec:bc-optimization}
 
-As discussed, LCU is already employed for the collision step, already resulting in a 50\% success probability per iteration.
-If another LCU step is added for the boundary conditions, the overall success probability would drop to 25\%.
+If we were to use the standard wet node scheme of performing collision followed by streaming and lastly apply boundary conditions, we would have to perform two independent LCU circuits.
+The consequences of such an operation would be a decrease in the success probability of the entire circuit, since we would need each independent LCU to succeed.
 
-The idea here was to move the boundary conditions step before the streaming step, and combine the collision and boundary operators into a single matrix.
-This is equivalent to considering the boundary conditions as a fundamental part of the collision process, instead of a separate step.
+To solve this, I decided to apply the boundary conditions \emph{before} streaming the distributions.
+Now the two operators are consecutive and can be replaced with a single combined operator, which will be decomposed via SVD and applied with a single LCU.
+
+
+It is straightforward to prove equivalence with post-streaming boundary conditions, in fact every post-streaming boundary condition operator $B_{post}$ can be converted to a $B_{pre}$ via linear transformations.
+Begin by considering a single iteration of each circuit:
+\begin{align*}
+    U_{pre} = S B_{pre} C \\
+    U_{post} = B_{post} S C
+\end{align*}
+
+We want these iterations to be equivalent, so we will force equality:
+\begin{align*}
+    U_{pre} &= U_{post} \\
+    S B_{pre} C &= B_{post} S C \\
+\intertext{Right-multiplying by $C^{-1}$ to drop the common operator:}
+    S B_{pre} &= B_{post} S \\
+\intertext{Left-multiplying by $S^{\dagger}$:}
+    B_{pre} &= S^{\dagger} B_{post} S
+\end{align*}
+Intuitively, this is like streaming ahead, applying the post-streaming boundary conditions and streaming back.
+
+\subsection{Probability Analysis}
+
+Merging the two operations into a single LCU is only worthwhile if the success probability is higher than the separate approach.
+I will both prove this fact mathematically and perform a numerical experiments to quantify the probability gain.
+For the purpose of this analysis, the streaming operator is ignored, replaced by the identity.
+
+Recall the probability of measuring the correct LCU substate from Formula~{\ref{eq:lcu_prob}}.
+
+While not required for correctness, we can normalize the $C$ operator as well, obtaining $\tilde{C} = C / \|C\|_2$.
+Due to the classical renormalization we perform, it increases the success probability of the LCU.
+
+If $\ket{\psi}$ is the initial state, then probability of success for the $C$ operator is:
+\begin{equation*}
+    P_C = \frac{\| \tilde{C} \ket{\psi} \|_2^2}{(0.5 + 0.5)^2} = \frac{\| C \ket{\psi} \|_2^2}{\|C\|_2^2}
+\end{equation*}
+because both coefficients of our LCU were $0.5$.
+We apply the same process for a normalized $\tilde{B}$.
+
+Let $U_{\tilde{B}}$ and $U_{\tilde{C}}$ be the corresponding LCU operations. 
+If we apply them sequentially, using two ancilla qubits, the resulting state works out as:
+\begin{equation*}
+    U_{\tilde{B}} U_{\tilde{C}} \ket{\psi}\ket{00} = (\tilde{B}\tilde{C}\ket{\psi})\ket{00} + \ket{\Phi^\perp} = \left( \frac{1}{\|B\|_2 \|C\|_2} BC \ket{\psi} \right)\ket{00} + \ket{\Phi^\perp}
+\end{equation*}
+where $\ket{\Phi^\perp}$ contains all throwaway states.
+Naturally, the probability of measuring the desired $\ket{00}$ substate works out to be:
+
 \begin{equation}
-    C_{combined} =  B \cdot C
+    P_{seq} = \left\| \frac{1}{\|B\|_2 \|C\|_2} BC \ket{\psi} \right\|_2^2 = \frac{\| BC \ket{\psi} \|_2^2}{\|B\|_2^2 \|C\|_2^2}
 \end{equation}
-I then perform SVD on this combined matrix $C_{combined}$. This maintains a single LCU step per iteration, preserving the 50\% success probability.
 
-\todo{REVISION: improve the probability discussion with LCU optimization details}
-\todo{REVISION: add section about post-to-pre streaming trick and discoveries}
+Alternatively, when we merge the two operators, we normalize the merged operator $M = BC$ directly, obtaining $\tilde{M} = M / \|BC\|_2$.
+The probability for the merged operator is then:
+\begin{equation}
+    P_{merged} = \| \tilde{M} \ket{\psi} \|_2^2 = \frac{\| BC \ket{\psi} \|_2^2}{\|BC\|_2^2}
+\end{equation}
 
-This shift does involve adjusting the boundary condition matrix to account for the fact that unknown distributions are now streamed immediately after being computed.
-While I have not proven that it is always possible to rewrite a post-streaming boundary condition as a pre-streaming one, I have managed to do so for the case I tested.
+Notice how the numerator is identical, so we only need to compare the denominators.
+
+The L2 norm is sub-multiplicative \cite{horn2012matrix}, meaning the following inequality holds:
+\begin{equation*}
+    \|BC\|_2 \le \|B\|_2 \|C\|_2
+\end{equation*}
+
+Because these norms are strictly positive scalars, squaring both sides and taking the inverse produces:
+\begin{equation}
+    \frac{1}{\|BC\|_2^2} \ge \frac{1}{\|B\|_2^2 \|C\|_2^2} \implies P_{merged} \ge P_{seq}
+\end{equation}
+
+
+In order to quantify the improvement, I directly compared the merged and sequential approaches.
+I applied both circuits (without the streaming) on the same initial states.
+I computed the probability by looking at the total amplitude of the $\ket{0}$ and $\ket{00}$ substates respectively.
+Additionally I also counted the total gates and circuit depths in the previously used IBM Eagle gate set.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Config} &
+\textbf{$P_{\text{merged}}$} &
+\textbf{$P_{\text{separate}}$} &
+\textbf{M. Gates} &
+\textbf{M. Depth} &
+\textbf{S. Gates} &
+\textbf{S. Depth} \\
+\midrule
+D1Q3 $N=4$      & 0.3700 & 0.2267 & 2{,}282  & 1{,}432 & 2{,}640  & 1{,}682 \\
+D1Q3 $N=8$      & 0.2654 & 0.1626 & 9{,}451  & 6{,}008 & 10{,}221 & 6{,}536 \\
+D2Q5 $4\times4$ & 0.3089 & 0.2271 & 154{,}585& 99{,}300& 157{,}689& 101{,}381\\
+\bottomrule
+\end{tabular}
+\caption{Success probability, circuit depth and total gates for separate collision and boundary LCU vs. merged approach}
+\label{tab:lcu-comparison}
+\end{table}
+
+The numerical experiment confirmed our mathematical inequality.
+Surprisingly, it also showed the merged circuit results in slightly fewer gates and shallower circuits.
 
 \section{Complexity Impact}
 \label{sec:bc-complexity}
 
-\todo{Write BC complexity analysis: impact of SVD decomposition, controlled unitaries, comparison with diagonal-only collision.}
+For the classical preprocessing, the cost of performing SVD can be ignored as it is only done once before simulation starts, getting amortized over the iterations.
+
+The circuit depth of the transpiled circuit does not change its complexity class, remaining at $\mathcal{O}(M\cdot N)$.
+What the presence of the boundary condition operator does impact is how close to the worst case our matrix gets.
+Because the operator is no longer diagonal, each unitary will have a significatly larger number of gates and circuit depth.
+
+To quantify this impact, I extended the previous transpilation experiment to include variations with boundary conditions defined.
+In both cases, boundary nodes were defined at the edge of the respective lattice.
+
+\begin{table}[H]
+\centering
+\caption{Transpiled gate count and circuit depth (gates / depth) per stage for BC configurations}
+\label{tab:transpilation_bc}
+\begin{tabular}{l c c r r r}
+\toprule
+Configuration & Qubits & BC Nodes & Collision & Collision + BC & Increase \\
+\midrule
+D1Q3 $M{=}4$  & 5 & 2 & 393 / 270         & 2{,}282 / 1{,}432    & $5.8\times$ \\
+D1Q3 $M{=}8$  & 6 & 2 & 786 / 540         & 9{,}451 / 6{,}008    & $12.0\times$ \\
+D1Q3 $M{=}16$ & 7 & 2 & 1{,}563 / 1{,}066 & 38{,}380 / 24{,}568  & $24.6\times$ \\
+D1Q3 $M{=}32$ & 8 & 2 & 3{,}110 / 2{,}107 & 154{,}605 / 99{,}320 & $49.7\times$ \\
+\midrule
+D2Q5 $4{\times}4$ & 8 & 4 & 3{,}219 / 2{,}188 & 154{,}610 / 99{,}320 & $48.0\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The data shows a substantial increase that further scales with the qubit count.
+Additionally, the number of boundary nodes appears to be insignificant, as evidenced by the 2D configuration having roughly the same number of gates as the 1D one with the same number of qubits.
 
 \section{Experimental Validation}
 \label{sec:bc-validation}
 
-I validated the method using a 1D Advection-Diffusion setup.
-This was chosen due to simplicity, but in theory nothing prevents the method from being applied to higher dimensions or more complex collision operators.
-The simulation parameters were as follows:
+The quantum circuit was validated against the classical implementation mirroring the same boundary condition mechanism.
 
+\paragraph*{1D Bounce-Back Boundary Conditions}
 \begin{itemize}
-    \item \textbf{Lattice:} 1D grid, size 32.
-    \item \textbf{Setup:} D1Q3 (Left, Rest, Right velocities).
-    \item \textbf{Initial Condition:} Gaussian hill centered in the domain.
-    \item \textbf{Velocity Field:} $u=0.1$ (rightward) for $t \in [0, 75]$, then $u=0$ for $t \in [75, 150]$.
-    \item \textbf{Boundary Conditions:} Solid walls at both ends, populations that would stream into the boundary are instead redistributed to be stationary. Equations for right boundary:
-
-    \[f_{-1}^{post} = f_{-1}^{pre} \]
-    \[f_{0}^{post} = f_{0}^{pre} + 1.0 \cdot f_{1}^{pre}\]
-    \[f_{1}^{post} = 0 \]
+    \item \textbf{Configuration:} D1Q3 with 32 lattice sites for 150 iterations.
+    \item \textbf{Links:} $\{(-1),(0),(1)\}$ with weights $\{1/6, 2/3, 1/6\}$.
+    \item \textbf{Initial condition:} Gaussian hill of amplitude 1.0 centered at $x=16$, width $\sigma=3$; wall sites held at zero density.
+    \item \textbf{Velocity field:} $u=0.1$ (rightward) for half the iterations, then $u=0$ for the rest.
 \end{itemize}
+\paragraph*{Boundary conditions:}
+Solid walls at sites 0 and $N-1$; boundary conditions applied at adjacent fluid nodes (sites 1 and $N-2$) to redistribute the link streaming into the wall to the stationary link instead.
 
-I performed both a classical simulation (implementing the same matrix logic) and the quantum simulation (statevector simulator).
-The classical simulation visually matched the expected behavior of a solid wall.
+At site 1 (left wall):
+\[f_{-1}^{post} = 0 \qquad f_{0}^{post} = f_{0}^{pre} + f_{-1}^{pre} \qquad f_{1}^{post} = f_{1}^{pre}\]
+At site $N-2$ (right wall):
+\[f_{-1}^{post} = f_{-1}^{pre} \qquad f_{0}^{post} = f_{0}^{pre} + f_{1}^{pre} \qquad f_{1}^{post} = 0\]
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{src/img/figures/snapshots.png}
-    \caption{Classical simulation results showing the Gaussian profile being contained by the solid walls. Given enough iterations, it would eventually flatten completely.}
+    \includegraphics[width=\textwidth]{src/img/figures/bc_1d_snapshots.png}
+    \caption{Classical simulation results showing the Gaussian profile being contained by the solid walls. Given enough iterations it would eventually flatten completely.}
     \label{fig:bc_snapshots}
 \end{figure}
 
-The quantum simulation was validated by computing the Root Mean Square Error (RMSE) between the classical and quantum results at each time step.
+The error is negligible up to floating point precision. 
+Interestingly, this experiment shows the same pattern of decreased error once the velocity field becomes simple.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{src/img/figures/rmse_comparison.png}
-    \caption{RMSE comparison between Classical and Quantum implementation demonstrating numerical precision agreement.}
-    \label{fig:bc_rmse}
+    \includegraphics[width=0.9\textwidth]{src/img/figures/bc_1d_rmse.png}
+    \caption{RMSE between classical and quantum for the 1D bounce-back boundary condition experiment.}
+    \label{fig:bc_1d_rmse}
 \end{figure}
 
-\todo{REVISION: add 2D boundary condition experiments}
+\paragraph*{2D Circle Obstacle}
+\begin{itemize}
+    \item \textbf{Configuration:} D2Q5 with $8 \times 8$ lattice sites for 25 iterations.
+    \item \textbf{Links:} $\{(0,0),(\pm1,0),(0,\pm1)\}$ with weights $\{1/3, 1/6, 1/6, 1/6, 1/6\}$.
+    \item \textbf{Initial condition:} Horizontal line of density $0.9$ at $y=1$, background density $0.05$.
+    \item \textbf{Velocity field:} Constant upward push $v=0.15$.
+\end{itemize}
+\paragraph*{Boundary conditions:}
+Central circular obstacle of radius $2$, occupying 12 lattice sites with boundary conditions applied at the 12 adjacent fluid nodes, redistributing outgoing links. The lattice margins themselves are periodic due to the default streaming wrapping.
+
+The general idea of the boundary condition is to reflect $20\%$ of the outgoing fluid, then equally distribute the rest between the remaining "safe" links.
+A link is considered safe if it does not stream into the wall. The rest link $(0,0)$ is always left unchanged.
+There are two flavors of boundary nodes with slightly different conditions: edges and corners.
+
+Consider the edge node at $(6, 4)$. The outgoing only link is $(-1,0)$, which will get split between $(+1,0)$ and the two tangential directions $(0,-1)$ and $(0,+1)$.
+The full set of conditions is:
+\begin{align*}
+    f_{(-1,0)}^{post} &= 0 \\
+    f_{(+1,0)}^{post}  &=  0.2\,f_{(-1,0)}^{pre} + f_{(+1,0)}^{pre} \\
+    f_{(0,-1)}^{post} &=  0.4\,f_{(-1,0)}^{pre} + f_{(0,-1)}^{pre} \\
+    f_{(0,+1)}^{post} &=  0.4\,f_{(-1,0)}^{pre} + f_{(0,+1)}^{pre} \\
+    f_{(0,0)}^{post} &= f_{(0,0)}^{pre} 
+\end{align*}
+
+For the corner node at $(2, 3)$, both $(+1,0)$ and $(0,+1)$ point into the wall.
+After reflecting, each outgoing link only has one remaining safe direction left: $(0,-1)$ and $(-1,0)$ respectively; because the other non-resting direction leads into the wall.
+The full set of conditions is:
+\begin{align*}
+    f_{(+1,0)}^{post}   &= 0 \\
+    f_{(0,+1)}^{post}   &= 0 \\
+    f_{(-1,0)}^{post}  &= 0.2\, f_{(+1,0)}^{pre}  + f_{(-1,0)}^{pre} + 0.8\, f_{(0,+1)}^{pre} \\
+    f_{(0,-1)}^{post}  &= 0.8\, f_{(+1,0)}^{pre} + f_{(0,-1)}^{pre} + 0.2\, f_{(0,+1)}^{pre} \\
+    f_{(0,0)}^{post} &= f_{(0,0)}^{pre} 
+\end{align*}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{src/img/figures/bc_2d_snapshots.png}
+    \caption{Heatmap evolution showing the density stripe rising and splitting around the circular obstacle.}
+    \label{fig:bc_2d_snapshots}
+\end{figure}
+
+The simulation again agrees with the classical one, however this RMSE plot exhibits a unique roughness compared to the previous ones.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{src/img/figures/bc_2d_rmse.png}
+    \caption{RMSE between classical and quantum for the 2D circle obstacle experiment.}
+    \label{fig:bc_2d_rmse}
+\end{figure}
+

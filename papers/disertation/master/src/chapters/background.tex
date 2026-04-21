@@ -23,8 +23,8 @@ Another equation commonly used is the \emph{Advection-Diffusion Equation}:
 Where $\Phi(x)$ is the scalar field, $D$ is the diffusion coefficient and $\mathbf{u(x)}$ is the velocity field.
 This equation is used to describe systems governed by two phenomena:
 \begin{itemize}
-    \item Diffusion: The scalar quantity disperses across the medium.
-    \item Advection: The scalar quantity moves according to the bulk motion of the medium.
+    \item \textbf{Diffusion}: The scalar quantity disperses across the medium.
+    \item \textbf{Advection}: The scalar quantity moves according to the bulk motion of the medium.
 \end{itemize} 
 Examples of usecases for this equation include heat transfer or the physical transport of pollutants through air/water \cite{stockie2011mathematics}.
 
@@ -48,8 +48,8 @@ I will not discuss them further in this thesis but they are nonetheless an inter
 
 All things considered, we can identify two main categories of classical CFD methods:
 \begin{itemize}
-    \item Continuum methods: which numerically solve the partial differential equations governing the system (usually Navier-Stokes).
-    \item Lattice methods - which model fluids as collections of fictitious particles moving on a lattice.
+    \item \textbf{Continuum methods}: which numerically solve the partial differential equations governing the system (usually Navier-Stokes).
+    \item \textbf{Lattice methods}: which model fluids as collections of fictitious particles moving on a lattice.
 \end{itemize}
 
 \section{The Lattice Boltzmann Method}
@@ -332,7 +332,7 @@ To do that, we begin by noting that any square matrix $A$ can be decomposed into
     A = \sum_{j=0}^{k-1} \alpha_j U_j
 \end{equation*}
 with $k$ being the number of unitaries in the decomposition, which depends entirely on the matrix itself.
-Let's take $k=2$ for simplicity, so $A = \alpha_0 U_0 + \alpha_1 U_1$, with $|\alpha_0| + |\alpha_0| = \lambda$.
+Let's take $k=2$ for simplicity, so $A = \alpha_0 U_0 + \alpha_1 U_1$, with $|\alpha_0| + |\alpha_1| = \lambda$.
 We can introduce the coefficients into our state with a gate $P$ applied only on the ancilla qubit:
 \begin{equation*}
     (P \otimes I)\ket{0}\ket{\psi} = \sqrt{\frac{\alpha_0}{\lambda}}\ket{0}\ket{\psi} + \sqrt{\frac{\alpha_1}{\lambda}}\ket{1}\ket{\psi}
@@ -364,6 +364,7 @@ While a block encoding allows us to apply non-unitary transformations, you may n
 When a measurement is made, there is a chance of obtaining a result from the unwanted $\ket{1}$ substate.
 In general, the success probability of measuring into the $\ket{0}$ substate depends on how much $A$ reduces the amplitude of $\ket{\psi}$ and the coefficients of the unitaries:
 \begin{equation}
+    \label{eq:lcu_prob}
     p_{\ket{0}} = \frac{\| A \ket{\psi} \|^2}{\lambda^2}
 \end{equation}
 
@@ -496,7 +497,3 @@ He later extended the method to the Navier-Stokes equations \cite{ljubomir2022qu
 For a DmQn lattice with M sites, the complexity analysis of this algorithm shows it is logarithmic in the number of lattice sites: $O(n\log(mM))$. This is a significant speedup over classical Lattice Boltzmann Methods which are linear.
 Unfortunately this QLBM has a crucial limitation: each time step requires measurements and a new initialization of the state.
 It is especially oppressive as the encoding (which was excluded from the above complexity) is linear in the number of lattice sites.
-
-There are more recent developments that try to solve these problems.
-For instance, Kocherla et al. proposed a QLBM that can delay the need for measurements until the end of the simulation \cite{kocherla2024fully}.
-

@@ -37,7 +37,7 @@ def encode_links(link_qubits: int, num_links: int) -> QuantumCircuit:
     return qc
 
 
-def encode(variable: NDArray[np.float64], link_qubits: int) -> Statevector:
+def encode(variable: NDArray[np.float64], link_qubits: int, extra_ancillas: int = 0) -> Statevector:
     state = variable.flatten(order='F')
     if not (len(state) & (len(state) - 1) == 0):
         raise ValueError("Length of flattened array must be a power of 2")
@@ -47,16 +47,23 @@ def encode(variable: NDArray[np.float64], link_qubits: int) -> Statevector:
     for _ in range(link_qubits):
         state = state.expand(ancilla)
 
-    return state.expand(ancilla)
+    for _ in range(1 + extra_ancillas):
+        state = state.expand(ancilla)
+
+    return state
 
 
-def macros(link_qubits: int) -> QuantumCircuit:
-    qc = QuantumCircuit(link_qubits + 1)
+def macros(link_qubits: int, extra_ancillas: int = 0) -> QuantumCircuit:
+    num_qubits = link_qubits + 1 + extra_ancillas
+    qc = QuantumCircuit(num_qubits)
     ancilla = link_qubits
 
     for i in range(link_qubits):
         qc.swap(i, ancilla)
         qc.h(ancilla)
+
+    # extra ancillas (e.g. BC LCU ancilla) are left untouched —
+    # their |0⟩ state encodes LCU success and must not be mixed
 
     return qc
 
@@ -88,6 +95,14 @@ def propagation(site_qubits: list[int], link_qubits: int, links: list[list[int]]
                 qc.append(r_gate(site_qubits[j]).control(link_qubits, ctrl_state=control_state), controls + targets[j])
                 dir -= 1
     return qc
+
+
+def lcu_success_probability(state: Statevector, num_ancillas: int) -> float:
+    """Success probability of the LCU: total amplitude in the |0...0⟩ subspace
+    of the ancilla qubits (top num_ancillas qubits in Qiskit ordering)."""
+    arr = np.array(state)
+    subspace_size = len(arr) // (2 ** num_ancillas)
+    return float(np.sum(np.abs(arr[:subspace_size]) ** 2))
 
 
 def recover_quantity_quantum_macros(

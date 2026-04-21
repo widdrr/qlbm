@@ -24,6 +24,7 @@ dependencies = [
     "seaborn>=0.13.2",
     "ipympl>=0.9.8",
     "pylatexenc>=2.10",
+    "scikit-image>=0.25.2",
 ]
 
 [project.urls]
