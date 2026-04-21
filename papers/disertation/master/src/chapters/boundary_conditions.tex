@@ -224,11 +224,12 @@ The quantum circuit was validated against the classical implementation mirroring
 \begin{itemize}
     \item \textbf{Configuration:} D1Q3 with 32 lattice sites for 150 iterations.
     \item \textbf{Links:} $\{(-1),(0),(1)\}$ with weights $\{1/6, 2/3, 1/6\}$.
-    \item \textbf{Initial condition:} Gaussian hill of amplitude 1.0 centered at $x=16$, width $\sigma=3$; wall sites held at zero density.
+    \item \textbf{Initial condition:} Gaussian hill of amplitude 1.0 centered at $x=16$, width $\sigma=3$.
     \item \textbf{Velocity field:} $u=0.1$ (rightward) for half the iterations, then $u=0$ for the rest.
 \end{itemize}
 \paragraph*{Boundary conditions:}
-Solid walls at sites 0 and $N-1$; boundary conditions applied at adjacent fluid nodes (sites 1 and $N-2$) to redistribute the link streaming into the wall to the stationary link instead.
+Solid walls at sites 0 and $N-1$ with boundary conditions applied at adjacent fluid nodes (sites 1 and $N-2$). 
+All fluid streaming into the wall gets redirected to the stationary link instead.
 
 At site 1 (left wall):
 \[f_{-1}^{post} = 0 \qquad f_{0}^{post} = f_{0}^{pre} + f_{-1}^{pre} \qquad f_{1}^{post} = f_{1}^{pre}\]
