@@ -4,11 +4,11 @@
 \section{Algorithm}
 \label{sec:algorithm}
 
-My QLBM algorithm is heavily based on the work of Wawrzyniak et al. \cite{wawrzyniak2025base}, which in turn builds upon Budinski's original algorithm.
+Our QLBM algorithm is heavily based on the work of Wawrzyniak et al. \cite{wawrzyniak2025base}, which in turn builds upon Budinski's original algorithm.
 Their version extends the original algorithm to support nonuniform velocity fields and improves the initialization procedure.
 
-Unlike all previous implementations I could find, I provide a truly generic, parameterized implementation that can work with any number of dimensions and any arbitrary set of links, including non-standard sets.
-For the implementation I used the Qiskit framework and the Qiskit Aer Statevector simulator \cite{qiskit2024}.
+Unlike all previous implementations we could find, we provide a truly generic, parameterized implementation that can work with any number of dimensions and any arbitrary set of links, including non-standard sets.
+For the implementation we used the Qiskit framework and the Qiskit Aer Statevector simulator \cite{qiskit2024}.
 
 An iteration of the algorithm consists of 4 steps:
 \begin{enumerate}
@@ -21,7 +21,7 @@ An iteration of the algorithm consists of 4 steps:
 Performing multiple iterations requires reinitializing the quantum state with the updated distribution function after each iteration.
 If the velocity field or the link velocities change between iterations, the quantum circuit must be reconfigured accordingly.
 
-Since the transpilation of the quantum circuit is the bottleneck of an iteration, instead of performing it each time, I transpile all \emph{distinct configurations} upfront and reuse the circuits during the simulation.
+Since the transpilation of the quantum circuit is the bottleneck of an iteration, instead of performing it each time, we transpile all \emph{distinct configurations} upfront and reuse the circuits during the simulation.
 \section{Circuit Structure}
 \label{sec:circuit}
 
@@ -50,7 +50,7 @@ The resulting state is:
 Where the first qubit is the ancilla, the next $n$ qubits encode the link index and the remaining $m$ qubits encode the lattice site index.
 The initialization is performed via Qiskit's \texttt{initialize} function to prepare a state given arbitrary amplitudes.
 
-Following Wawrzyniak et al., I only initialize one of the link substates like this and make use of Hadamard gates to prepare the remaining substates.
+Following Wawrzyniak et al., we only initialize one of the link substates like this and make use of Hadamard gates to prepare the remaining substates.
 
 \begin{equation}
     \ket{\psi} = \ket{0}\frac{1}{\sqrt{2^n}}\sum_{i}^{2^n} \ket{i}\sum_{x}\frac{\Phi(x)}{||\Phi(x)||} \ket{x}
@@ -94,7 +94,7 @@ $M$ as a linear combination of unitaries $\frac{1}{2}(U_0 + U_1)$ with $U_0 = M 
 The fact that the collision operator is diagonal is essential for this construction. More details in Appendix~\ref{app:collision_lcu}
 
 Generally speaking, if the parameters respect the necessary preconditions to recover the ADE, then $M$ will be contractive, making the LCU technique possible. 
-I used Qiskit's \texttt{DiagonalGate} to implement these unitaries.
+We used Qiskit's \texttt{DiagonalGate} to implement these unitaries.
 
 
 The LCU circuit is identical to the one in Figure~\ref{fig:lcu_circuit}, with the mention that because both coefficients are eqaul,
@@ -126,14 +126,14 @@ These circuits "wrap" around upon reaching the boundary state, naturally impleme
 Finally, the macroscopic distribution is recovered by summing over the link distributions.
 This can be done both classically, after obtaining the final state or by applying a series of Hadamard and Swap gates to accumulate the distributions into a single link substate.
 
-My implementation uses the quantum variant.
+Our implementation uses the quantum variant.
 Lastly, the resultant distribution must be classically rescaled to the original norm because the quantum state was normalized.
 
 \section{Experimental Validation}
 \label{sec:validation}
 
-To validate my implementation, I performed a series of experiments with various configurations and compared the results against classical simulations.
-I could not find an existing classical simulator that would produce an output in a similar format, so I implemented a basic one.
+To validate our implementation, we performed a series of experiments with various configurations and compared the results against classical simulations.
+We could not find an existing classical simulator that would produce an output in a similar format, so we implemented a basic one.
 The classical simulator follows the same collision formulas but avoids the pitfall of simply reimplementing the quantum algorithm as vector-matrix multiplication.
 The speed of sound was the same in all experiments $c_s=\frac{1}{\sqrt{3}}$.
 
@@ -210,7 +210,7 @@ This is the parametrization for a Taylor-Green Vortex, a classic benchmark for L
 \end{figure}
 
 This configuration yielded the highest error out of all the experiments at around $10^{-4}$
-I do not yet have a concrete explanation for it, but the current hypothesis is the complex velocity field.
+We do not yet have a concrete explanation for it, but the current hypothesis is the complex velocity field.
 
 \begin{figure}[H]
     \centering
@@ -256,8 +256,8 @@ For a classical LBM simulating the ADE, both the time and space complexities are
 Given a lattice with a total of $M=\sum_{i=0}^{d}M_i$ sites and $N$ propagation directions, the complexity is $\mathcal{O}(M\cdot N)$ \cite{kruger2016lattice}.
 This is complexity does not depend on the specifics such as the velocity field.
 
-For my QLBM I already established in the previous section that the total number of qubits used is $n+m+1$. Writing the sum in terms of $M$ and $N$ results in a logarithmic complexity: $\mathcal{O}(\log{M} + log{N})$.
-Since I am encoding information in superposition states, it's natural to see an improvement here.
+For our QLBM we already established in the previous section that the total number of qubits used is $n+m+1$. Writing the sum in terms of $M$ and $N$ results in a logarithmic complexity: $\mathcal{O}(\log{M} + log{N})$.
+Since we are encoding information in superposition states, it's natural to see an improvement here.
 
 Analyzing the time complexity is not so straightforward.
 First of all, in a quantum circuit we are usually interested in the \emph{circuit depth}: the number sequential of quantum gates used to implement the circuit as a function of the size of the input.
@@ -267,14 +267,14 @@ Which gates are elementary usually depends on the physical implementation of the
 
 \paragraph*{Initialization} is performed entirely by the Qiskit \texttt{initialize} function.
 Internally, it makes use of Iten et al.'s exponential procedure \cite{iten2016isometries}.
-Since I only initialize the $m$ lattice qubits, this results in a time complexity of $\mathcal{O}(2^m)$ or $\mathcal{O}(M)$.
+Since we only initialize the $m$ lattice qubits, this results in a time complexity of $\mathcal{O}(2^m)$ or $\mathcal{O}(M)$.
 The following $H$ gates applied on the velocity qubits, which is $\mathcal{O}(1)$.
 All in all, the initialization step is linear.
 
 \paragraph*{Collision} is defined as a linear combination of unitaries, with each unitary gate being a diagonal.
 Naturally the bottleneck of this stage will be the decomposition of the diagonal gates into elementary ones.
 The procedure used by Qiskit's \texttt{DiagonalGate} is based on Malvetti's work \cite{malvetti2018synthesis}. The decomposition's depth is exponential in the matrix's dimension.
-Since I am manually computing the controlled unitaries, each matrix is $n+m+1 \times n+m+1$, meaning the final worst case complexity for the collision stage is $\mathcal{O}(2^{(m+n)})$ or $\mathcal{O}(M\cdot N)$.
+Since we are manually computing the controlled unitaries, each matrix is $n+m+1 \times n+m+1$, meaning the final worst case complexity for the collision stage is $\mathcal{O}(2^{(m+n)})$ or $\mathcal{O}(M\cdot N)$.
 Note however that this is the worst case complexity, when the velocity field is chaotic.
 With a highly structured velocity field, the diagonals end up much easier to decompose, achieving potential polynomial or even constant complexity.
 
@@ -294,7 +294,7 @@ The actual details will depend heavily on the particular simulation parameters c
 
 \subsection{Numerical Benchmarks}
 
-In addition to the theoretical analysis, I have performed a concrete numerical analysis for the gate count and circuit depth of each stage under various configurations.
+In addition to the theoretical analysis, we have performed a concrete numerical analysis for the gate count and circuit depth of each stage under various configurations.
 The chosen elementary gate set was the IBM Eagle native set: $\{R_z, \sqrt{X}, X, \text{CX}\}$ \cite{ibm_quantum_2026}.
 
 The data in Table~\ref{tab:transpilation} supports the theoretical analysis.
@@ -341,7 +341,7 @@ D3Q27 $4{\times}4{\times}4$ & 12 & 2,274 / 2,245 & 15 / 3 & 59,457 / 43,060 & 4,
 
 Unlike the other stages which can be transpiled once per configuration and cached, initialization must be redone each iteration since
 it directly depends on the distribution.
-In Table~\ref{tab:init_per_iter} I counted the total gates and circuit depth for each iteration as the distribution evolves for a given configuration.
+In Table~\ref{tab:init_per_iter} we counted the total gates and circuit depth for each iteration as the distribution evolves for a given configuration.
 Notice how the first iteration has a noticeable lower circuit depth, this is due to the extra structure of the initial distribution (a gaussian ring).
 As the simulation evolves and distribution becomes more chaotic, the depth increases but quickly stabilizes.
 

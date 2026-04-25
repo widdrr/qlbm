@@ -2,7 +2,7 @@
 \label{chapter:discussion}
 
 While the simulator shows decent agreement with its classical counterpart, in order for it to be practical it must provide a tangible quantum speedup.
-Some limitations are inherent to the QLBM and are active areas of research in the field, others are unique to the ideas I explored in this thesis.
+Some limitations are inherent to the QLBM and are active areas of research in the field, others are unique to the ideas we explored in this thesis.
 
 \section{Quantum State Tomography}
 The largest blocker for the practicality of the QLBM comes from the design itself.
@@ -10,22 +10,22 @@ Each iteration involves encoding the distribution into the state, evolving it an
 Recall however that measuring a quantum state yields a single basis state; all amplitudes are essentially erased.
 
 To recover the distribution function we need all amplitudes of the superposition.
-For the experiments in this thesis, I sidesteped this and directly read the simulator statevector.
+For the experiments in this thesis, we sidestepped this and directly read the simulator statevector.
 On a real quantum computer however this is impossible, the only way to recover the amplitudes is to perform \emph{quantum state tomography} (QST),
 an expensive process involving repeatedly running the circuit (shots) in order to reconstruct the state from the probability distributions.
 To make matters worse, the usage of the LCU technique introduces a chance that any measurement will be a failure and have to be discarded.
 The silver lining is that we do not require the entire quantum state, only the absolute values of each amplitude. This lowers the number of shots needed.
 
-To illustrate the impact, I numerically compared the shot-based QST approach to the idealized statevector readout.
-I removed the macros computation circuit from the shot-based simulator, since it is now done classically.
-For the experiment, I would run an iteration, perform a computational basis measurement and add the value to the histogram if the ancilla was $\ket{0}$ or discard otherwise.
-I would repeat this process for a predetermined number of shots, then compute the RMSE with the statevector simulation.
+To illustrate the impact, we numerically compared the shot-based QST approach to the idealized statevector readout.
+We removed the macros computation circuit from the shot-based simulator, since it is now done classically.
+For the experiment, we would run an iteration, perform a computational basis measurement and add the value to the histogram if the ancilla was $\ket{0}$ or discard otherwise.
+We would repeat this process for a predetermined number of shots, then compute the RMSE with the statevector simulation.
 Shot counts were spaced logarithmically and each trial was repeated 5 times to smooth out the variance for lower counts.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{src/img/figures/qst_rmse.png}
-    \caption{RMSE between shot-based and statevector density.}
+    \includegraphics[width=0.8\textwidth]{src/img/figures/qst_rmse.png}
+    \caption{RMSE between shot-based and statevector results.}
     \label{fig:qst_rmse}
 \end{figure}
 
@@ -80,7 +80,7 @@ The aforementioned distribution parametrization technique serves a dual function
 For the collision step, even ignoring the necessity of using $LCU$, the unitaries themselves are impractical to transpile and run even in simulators.
 Budinski's original work manually decomposed each diagonal intro controlled phase-shift gates and thus achieved an efficient decomposition that only depended on the number of links \cite{budinski2021quantum}.
 However, that decomposition is only possible when the advection velocity field is assumed to be uniform. 
-When the velocity field is allowed to vary spatially, such as in the case of my simulator, the most efficient decomposition of a diagonal gate still scales exponentially with the number of spatial qubits.
+When the velocity field is allowed to vary spatially, such as in the case of our simulator, the most efficient decomposition of a diagonal gate still scales exponentially with the number of spatial qubits.
 
 Adding boundary conditions in the format designed by this thesis further complicates any potential efficient decomposition, since the resulting unitaries are no longer even diagonal.
 The combined collision-boundary operator could still have structure that can be exploited for a more efficient decomposition, but that was outside the scope of this thesis.
@@ -94,8 +94,8 @@ Beyond the previously mentioned performance limitations, the QLBM described in t
 The first and most evident is that the total simulated quantity must remain constant. 
 This is a direct consequence of quantum states having to be normalized.
 Modelling lattices with continuous inlets or outlets is usually done in a hybrid manner, where the quantity loss or gain is applied classically after each circuit iteration \cite{jennings2026simulating}.
-This limitation further extends to boundary conditions and is the sole reason for imposing the L1-norm preserving restriction.
+This limitation further extends to boundary conditions and is the sole reason for imposing the left-stochastic restriction.
 
 The second limitation comes from setting the relaxation time $\tau=1$.
-While this is what allows the collision operator to be linear in the first place, it also limits the types phenomena the QLBM can simulate.
+While this is what allows the collision operator to be linear in the first place, it also limits the types of phenomena the QLBM can simulate.
 The fixed relaxation time permanently locks the lattice viscosity, making complex physics such as turbulent flows or non-Newtonian fluids difficult to simulate \cite{kruger2016lattice}.

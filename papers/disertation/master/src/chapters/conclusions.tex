@@ -1,20 +1,25 @@
-\chapter{Conclusions}
+\chapter{Conclusions and Future Work}
 \label{chapter:conclusions}
 
-There is a lot of potential for quantum computing in computational fluid dynamics.
-Any speedup in CFD simulations could have significant impact in many important fields like aerodynamics, meteorology and medicine.
-Despite this, the field of Quantum Computational Fluid Dynamics is still in its early stages.
+Computational Fluid Dynamics is a field with a multitude of applications, including aerodynamics, meteorology and medicine.
+Any speedup that quantum computers could offer for CFD simulations would have significant impact.
 
-Various groups are working on different approaches to extend classical CFD methods to quantum computers.
-The algorithms generally agree with both classical counterparts and theoretical solutions.
-That being said, because of the limited number of qubits we can simulate, quantum CFD simulations are limited to low-dimensional, simple problems.
-Theoretical improvements to the runtime of simulations have been shown, but all of them have practical drawbacks that need to be addressed.
+The Quantum Lattice Boltzmann Method is a promising candidate for a quantum CFD algorithm, with several groups actively researching it.
+In this thesis, we implemented and evaluated a flexible, generic QLBM simulator for the Advection-Diffusion equation.
+The implementation followed established algorithms but specifically focused on highly customizable configurations.
 
-The focus in recent times has been exactly to address these limitations and make the algorithms viable for near term quantum computers.
+Experimental validation shows numerical agreement with classical simulations on scenarios ranging from simple 1D diffusions to 2D time-varying advection fields and 3D vortices. 
+We analyzed the performance limitations of the algorithm, with a particular focus on the success rate of the linear combination of unitaries technique, impact of quantum state tomography and inherent circuit depths.
+The discussion was backed up by the analytical complexity analysis as well as numerical experiments.
 
-In this work we presented a fully generic and parameterized implementation of a QLBM algorithm for the advection-diffusion equation.
-We validated the implementation with various experiments of increasing complexity and demonstrated that it matches classical simulation within a reasonable error margin.
+Our novel addition to the algorithm was introducing a system for defining wet-node, linear and left-stochastic boundary conditions.
+The results showed that while accurate to the classical simulator, the boundary conditions mechanism incurred a significant performance penalty.
 
-We successfully demonstrated a generic method for implementing local, linear, norm-preserving boundary conditions in the QLBM.
-The method leverages LCU and SVD to handle non-unitary boundary operators, and optimizes circuit design by combining collision and boundary steps.
-Validation through a 1D advection-diffusion simulation with solid walls confirmed that the quantum implementation matches classical results within numerical precision.
+There are plenty of opportunities for future work based on this algorithm.
+On the functional side, the simulator could be extended beyond the Adveciton-Diffusion equation, towards simulation Navier-Stokes flows.
+Another interesting avenue is support non-stochastic boundary conditions: designing a method to encode quantity gain and loss within the quantum state.
+The fundamental bottlenecks of the algorithm, such as quantum state tomography and arbitrary initialization are already active topics of research in the field.
+Improving on our present boundary condition encoding to perhaps reduce the runtime impact can also be a future direction.
+
+In conclusion, this thesis contributes to the field of quantum computational fluid dynamics by implementing, validating and benchmarking a QLBM simulator.
+While this method has seen significant interest from the scientific community, there are several challenges that must be addressed before the algorithm can be used for real, at scale fluid simulations on the noisy quantum computers of today.

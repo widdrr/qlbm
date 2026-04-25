@@ -11,13 +11,13 @@ Depending on how the boundary is encoded into the lattice, LBM simulators distin
 Most of the existing literature opts to implement specific link-wise boundary conditions, such as bounce-back, directly in the circuit \cite{ljubomir2022quantum,jennings2026simulating,lee2025advanced}.
 This approach benefits from being able to efficiently embed simple conditions directly into the circuit.
 
-For my simulator I wanted to try a fully parametrized approach, able to be customized for a large class of boundary conditions, then evaluate the incured cost of generality.
+For our simulator we wanted to try a fully parametrized approach, able to be customized for a large class of boundary conditions, then evaluate the incured cost of generality.
 \section{Linear Boundary Formulation}
 \label{sec:bc-formulation}
 
-Due to the linear constraints of quantum operations, I focused on modeling the unknown distributions as linear combinations of the known distributions at the boundary nodes.
+Due to the linear constraints of quantum operations, we focused on modeling the unknown distributions as linear combinations of the known distributions at the boundary nodes.
 This is a well known wet-node approach, detailed by \cite{zou1997pressure}.
-Additionally I have chosen to only consider boundary conditions that preserve the total quantity at the boundary node.
+Additionally we have chosen to only consider boundary conditions that preserve the total quantity at the boundary node.
 Mathematically, this can be expressed as:
 
 \begin{align*}
@@ -52,7 +52,7 @@ The real $B$ matrix will however be a permutation of the block-diagonal variant,
 \label{sec:bc-implementation}
 
 Since the boundary operator $B$ is generally non-unitary, it cannot be directly implemented as a quantum gate.
-To address this, I once again employ the LCU technique.
+To address this, we once again employ the LCU technique.
 As established, a diagonal, real-valued operator is straightforward to express as a linear combination of two unitaries:
 \begin{equation*}
 C = \frac{1}{2} (C + i\sqrt{I - C^2}) + \frac{1}{2}(C - i\sqrt{I - C^2})
@@ -71,7 +71,7 @@ Using these facts, $\Sigma$ can be decomposed as a linear combination of two uni
 \end{equation}
 
 Note however that unlike with the collision operator we do not have any guarantees $\Sigma$ will be contractive.
-To solve this, I took the simplest approach possible and normalized $\Sigma$ via dividing by its spectral norm.
+To solve this, we took the simplest approach possible and normalized $\Sigma$ via dividing by its spectral norm.
 This scaling is irelevant to our overall algorithm, thanks to the renormalization performed at the end of each simulation step.
 
 Lastly, boundary nodes should be exempt from the normal collision operator. In a way, the boundary condition can be thought of as a special collision operator for that node.
@@ -82,7 +82,7 @@ Mathematically, this translates in replacing the corresponding entries in the co
 If we were to use the standard wet node scheme of performing collision followed by streaming and lastly apply boundary conditions, we would have to perform two independent LCU circuits.
 The consequences of such an operation would be a decrease in the success probability of the entire circuit, since we would need each independent LCU to succeed.
 
-To solve this, I decided to apply the boundary conditions \emph{before} streaming the distributions.
+To solve this, we decided to apply the boundary conditions \emph{before} streaming the distributions.
 Now the two operators are consecutive and can be replaced with a single combined operator, which will be decomposed via SVD and applied with a single LCU.
 
 
@@ -107,7 +107,7 @@ Intuitively, this is like streaming ahead, applying the post-streaming boundary 
 \subsection{Probability Analysis}
 
 Merging the two operations into a single LCU is only worthwhile if the success probability is higher than the separate approach.
-I will both prove this fact mathematically and perform a numerical experiments to quantify the probability gain.
+We will both prove this fact mathematically and perform a numerical experiments to quantify the probability gain.
 For the purpose of this analysis, the streaming operator is ignored, replaced by the identity.
 
 Recall the probability of measuring the correct LCU substate from Formula~{\ref{eq:lcu_prob}}.
@@ -153,10 +153,10 @@ Because these norms are strictly positive scalars, squaring both sides and takin
 \end{equation}
 
 
-In order to quantify the improvement, I directly compared the merged and sequential approaches.
-I applied both circuits (without the streaming) on the same initial states.
-I computed the probability by looking at the total amplitude of the $\ket{0}$ and $\ket{00}$ substates respectively.
-Additionally I also counted the total gates and circuit depths in the previously used IBM Eagle gate set.
+In order to quantify the improvement, we directly compared the merged and sequential approaches.
+We applied both circuits (without the streaming) on the same initial states.
+We computed the probability by looking at the total amplitude of the $\ket{0}$ and $\ket{00}$ substates respectively.
+Additionally we also counted the total gates and circuit depths in the previously used IBM Eagle gate set.
 
 \begin{table}[H]
 \centering
@@ -280,7 +280,7 @@ The circuit depth of the transpiled circuit does not change its complexity class
 What the presence of the boundary condition operator does impact is how close to the worst case our matrix gets.
 Because the operator is no longer diagonal, each unitary will have a significatly larger number of gates and circuit depth.
 
-To quantify this impact, I extended the previous transpilation experiment to include variations with boundary conditions defined.
+To quantify this impact, we extended the previous transpilation experiment to include variations with boundary conditions defined.
 In both cases, boundary nodes were defined at the edge of the respective lattice.
 
 \begin{table}[H]

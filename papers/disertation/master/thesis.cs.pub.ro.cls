@@ -156,7 +156,7 @@
 
 \newenvironment{frontmatter}{\pagenumbering{roman}}{\newpage \pagenumbering{arabic}}
 
-\renewenvironment{abstract}{\null\vfil\prefacesection{Abstract}}{\par\vfill\null}
+\renewenvironment{abstract}{\prefacesection{Abstract}}{\par\vfill\null}
 
 \def\prefacesection#1{%
 	\chapter*{#1}
