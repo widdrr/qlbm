@@ -1,4 +1,4 @@
-from .simulate import simulate_flow, simulate_flow_classical
+from .simulate import simulate_flow, simulate_flow_classical, simulate_flow_sampled
 from .analysis import save_rmse_comparison, write_array_to_csv, count_gates, transpile_stage
 from .initial_conditions import *
 from .visualization import *

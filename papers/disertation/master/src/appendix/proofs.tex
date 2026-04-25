@@ -109,3 +109,62 @@ Since both $M$ and $\sqrt{I-M^2}$ are diagonal, they commute, causing the cross-
 
 The exact same logic is used to show that $U_0 U_{0}^\dagger = I$.
 The entire process is repeated for $U_1$.
+
+\section*{Variance Stabilization in Amplitude-Encoded Readout}
+\label{app:variance_stabilization}
+
+
+The L2-normalized link distributions are encoded as amplitudes of the quantum state. 
+After an iteration, the state $\ket{x,i}$ will have amplitude of absolut value $f_i(x)$, where $i$ is the link index and $x$ is the site.
+As per the Born rule, the probability of measuring $\ket{x,i}$ will be $f_i(x)^2 = p_i(x)$. 
+All notation thereafter is implied to refer to link $i$ and site $x$, even if omitted. We will also ignore the ancilla qubit for simplicity.
+
+Denote $K ~ B(S,p)$ the random variable determining the number of times we measure our state out of $S$ trials.
+Let $\hat{p} = K/S$ be our statistical estimator for $p$. From standard binomial statistics we have:
+\begin{align*}
+    E[K] = Sp &\implies E[\hat{p}] = p \\
+    \text{Var}[K] = Sp(1-p) &\implies \text{Var}(\hat{p}) = \frac{p(1 - p)}{S}
+\end{align*}
+
+However we need to recover the post-iteration $f = \sqrt{p}$, meaning we will be trying to determine $\hat{f} = \sqrt{\hat{p}}$.
+To determine the variance we can apply the first-order Delta method \cite{casella2002statistical} which relies on the Taylor series expansion of the applied function around its mean $\mu$:
+\begin{equation}
+    \text{Var}(f(X)) \approx \left[ f'(\mu) \right]^2 \text{Var}(X)
+\end{equation}
+
+Applying this for $\hat{f} = \sqrt{\hat{p}}$ we obtain:
+
+\begin{align*}
+      \text{Var}\left(\sqrt{\hat{p}}\right) &\approx \left( \frac{1}{2\sqrt{p}} \right)^2 \left( \frac{p(1 - p)}{S} \right) \nonumber \\
+    &\approx \left( \frac{1}{4p} \right) \left( \frac{p(1 - p)}{S} \right) \nonumber \\
+    &\approx \frac{1 - p}{4S}
+\end{align*}
+
+In the context of the fluid simulation with $M$ lattice sites and $N$ discrete velocities, the probability must be split across the $M \times N$ states.
+While the actual distribution of the fluid matters, in general as the scope of the simulation increases, the probability of measuring any specific state decreases $(p\ll1)$.
+Under these circumstances, we can simplify the variance to:
+
+\begin{equation}
+    \text{Var}(\hat{f}) \approx \frac{1}{4S}
+\end{equation}
+
+This result prooves that the statistical variance of an approximated amplitude only depends on the total shot count.
+Defining $\rho = \sum_{i=1}^{N}f_i$ to be the real density at the site, we obtained the estimator $\hat{\rho} = \sum_{i=0}^{N}\hat{f}_i$, with variance:
+\begin{equation*}
+    \text{Var}(\hat{\rho}) = \sum_{i=1}^N \text{Var}(\hat{f}_{i}) \approx \sum_{i=1}^N \frac{1}{4S} = \frac{N}{4S}
+\end{equation*}
+
+By definition, the Root Mean Square Error (RMSE) of the entire lattice density will be:
+\begin{equation}
+    \text{RMSE} = \sqrt{ \frac{1}{M} \sum_{x=1}^{M} E\left[ (\hat{\rho}_x - \rho_x)^2 \right] } = \sqrt{ \frac{1}{M} \sum_{s=x}^{M} \text{Var}(\hat{\rho}_x) }
+\end{equation}
+
+Applying our value for $\text{Var}(\hat{\rho}_x)$ we obtain:
+
+\begin{equation*}
+    \text{RMSE} \approx \sqrt{ \frac{1}{M} \sum_{x=1}^{M} \left( \frac{N}{4S} \right) } = \sqrt{ \frac{1}{M} \left( M \cdot \frac{N}{4S} \right) } = \frac{\sqrt{N}}{2\sqrt{S}}
+\end{equation*}
+
+Since the lattice size naturally vanishes from the RMSE and because each individual lattice site variance does not depend on it, neither does the final expression.
+This result demonstrates that the error only depends on the total shot count and the number of link velocities.
+The $N$ values used in my experiment (3 vs 5) are too insignificant compared to the shot count to be able to numerically see a difference.

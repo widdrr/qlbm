@@ -1,35 +1,101 @@
-\chapter{Challenges, Limitations and Future Work}
+\chapter{Limitations and Open Problems}
 \label{chapter:discussion}
 
-\section{Current Limitations}
-\label{sec:limitations}
+While the simulator shows decent agreement with its classical counterpart, in order for it to be practical it must provide a tangible quantum speedup.
+Some limitations are inherent to the QLBM and are active areas of research in the field, others are unique to the ideas I explored in this thesis.
 
-Unfortunately this QLBM has a crucial limitation: each time step requires measurements and a new initialization of the state.
-It is especially oppressive as the encoding (which was excluded from the above complexity) is linear in the number of lattice sites.
+\section{Quantum State Tomography}
+The largest blocker for the practicality of the QLBM comes from the design itself.
+Each iteration involves encoding the distribution into the state, evolving it and lastly extracting the next distribution.
+Recall however that measuring a quantum state yields a single basis state; all amplitudes are essentially erased.
 
-It is still unclear if the higher error for complex velocity fields is due to the algorithm itself or our implementation. Further investigation is required.
+To recover the distribution function we need all amplitudes of the superposition.
+For the experiments in this thesis, I sidesteped this and directly read the simulator statevector.
+On a real quantum computer however this is impossible, the only way to recover the amplitudes is to perform \emph{quantum state tomography} (QST),
+an expensive process involving repeatedly running the circuit (shots) in order to reconstruct the state from the probability distributions.
+To make matters worse, the usage of the LCU technique introduces a chance that any measurement will be a failure and have to be discarded.
+The silver lining is that we do not require the entire quantum state, only the absolute values of each amplitude. This lowers the number of shots needed.
 
-The algorithm requires quantum state tomography at each iteration which is a significant limitation for practical usage.
-There is active research in this area, such as the work of Kocherla et al. \cite{kocherla2024fully}, in which they can defer measurement until the end of the simulation.
-Combining their approach with our implementation is an interesting avenue.
+To illustrate the impact, I numerically compared the shot-based QST approach to the idealized statevector readout.
+I removed the macros computation circuit from the shot-based simulator, since it is now done classically.
+For the experiment, I would run an iteration, perform a computational basis measurement and add the value to the histogram if the ancilla was $\ket{0}$ or discard otherwise.
+I would repeat this process for a predetermined number of shots, then compute the RMSE with the statevector simulation.
+Shot counts were spaced logarithmically and each trial was repeated 5 times to smooth out the variance for lower counts.
 
-Both the initialization procedure and the collision operator are highly inefficient, relying on Qiskit's transpiler to generate complex and deep circuits.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{src/img/figures/qst_rmse.png}
+    \caption{RMSE between shot-based and statevector density.}
+    \label{fig:qst_rmse}
+\end{figure}
 
-\todo{REVISION: reword future directions}
-\section{Future Directions}
-\label{sec:future}
+According to the results, the error decreases linearly.
+However it takes around $10^6$ shots \emph{per iteration} to achieve an error of $10^-3$, which is still orders of magnitude above the highest errors encountered in the previous experiments.
+The independence of the error with respect to lattice size (8 vs 16 sites) is explained by the process of recovering the amplitudes.
+Since the measurement probability is the square of the absolute amplitude, we must take the square root of the measured probabilities to recover each link distribution.
+Applying a square root to the sampled binomial distribution is an example of a \emph{variance-stabilizing transformation} \cite{casella2002statistical}, causing the sampling variance to only depend on shot count.
+A full explanation can be found in Appendix~\ref{app:variance_stabilization}.
 
-There are more recent developments that try to solve these problems.
-For instance, Kocherla et al. proposed a QLBM that can delay the need for measurements until the end of the simulation \cite{kocherla2024fully}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{src/img/figures/qst_1d_snapshots.png}
+    \caption{1D density snapshots at increasing shot counts compared to the
+    ideal statevector readout.}
+    \label{fig:qst_1d_snapshots}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{src/img/figures/qst_2d_snapshots.png}
+    \caption{2D density snapshots at increasing shot counts compared to the
+    ideal statevector readout.}
+    \label{fig:qst_2d_snapshots}
+\end{figure}
 
-The algorithm could be extended to simulate Navier-Stokes flows by using the stream-vorticity formulation, as proposed by Budinski \cite{ljubomir2022quantum}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{src/img/figures/qst_discard.png}
+    \caption{Fraction of shots discarded due to ancilla (collision oracle) failure.}
+    \label{fig:qst_discard}
+\end{figure}
 
-There are plenty of directions for future work regarding boundary conditions:
-\begin{itemize}
-    \item Investigating the kinds of boundary conditions that can be expressed using this method, and whether or not all post-streaming conditions can be rewritten as pre-streaming ones.
-    \item Extending the method to support constants in the boundary equations, allowing for source and sink terms.
-    \item Extending the method to support non-local boundary conditions that depend on multiple nodes.
-    \item Testing the method in higher-dimensional simulations.
-    \item Exploring other methods for the LCU decomposition that would avoid SVD.
-\end{itemize}
+The percentange of discarded shots due to measuring the ancilla in the $\ket{1}$ state quickly converges to ~$70\%$, consistent with the previous success probability experiment. Even so, almost tripling the shot count further exacerbates the bottleneck of QST.
+
+Given that the need for QST is the most severe bottleneck of the method, there is plenty of active research on how to mitigate it, such as Kocherla et al's Restless QLBM which can delay the need for measurement until the end of the simulation \cite{kocherla2024fully}.
+While the theoretical improvement is substantial, their simulator tackles a simplified setup that does not recover the full Botlzmann Equation.
+
+A way to sidestep this limitation is to no longer care about the full distribution function.
+Tiwari et al. managed to run 2D and 3D simulations on real quantum hardware by parametrizing the distribution \cite{tiwari2025algorithmic}.
+Only having to compute a few values to fully characterize the function removes the need for QST, but limits the simulation to well-behaved scenarios that preserve the initial function family.
+
+\section{Circuit Performance Bottlenecks}
+
+Assuming we could completely circumvent the issues of state readout, the iteration circuit is not without its problems highlighted earlier in the thesis: initialization and collision.
+Both of these operations result in exceedingly deep circuits which would be outright unusable in current noisy quantum computers.
+
+Efficient initialization of arbitrary quantum states is a central problem in quantum computing, outside of fluid simulations.
+In this regard, the QLBM will directly benefit from any advancements made, such as Quantum Random Access Memory technology \cite{giovannetti2008quantum}.
+The aforementioned distribution parametrization technique serves a dual function and also greatly reduces the initialization cost.
+
+For the collision step, even ignoring the necessity of using $LCU$, the unitaries themselves are impractical to transpile and run even in simulators.
+Budinski's original work manually decomposed each diagonal intro controlled phase-shift gates and thus achieved an efficient decomposition that only depended on the number of links \cite{budinski2021quantum}.
+However, that decomposition is only possible when the advection velocity field is assumed to be uniform. 
+When the velocity field is allowed to vary spatially, such as in the case of my simulator, the most efficient decomposition of a diagonal gate still scales exponentially with the number of spatial qubits.
+
+Adding boundary conditions in the format designed by this thesis further complicates any potential efficient decomposition, since the resulting unitaries are no longer even diagonal.
+The combined collision-boundary operator could still have structure that can be exploited for a more efficient decomposition, but that was outside the scope of this thesis.
+Implementing a specific type of hardcoded boundary condition, such as Bounce-Back during the streaming process, is a much more efficient alternative that is being used in other works \cite{jennings2026simulating,lee2025advanced}.
+The drawback is losing the flexibility and generality of defining custom conditions for each node.
+
+\section{Functional Limitations}
+
+Beyond the previously mentioned performance limitations, the QLBM described in this thesis has a number of functional limitations in the type of scenarios it can simulate.
+
+The first and most evident is that the total simulated quantity must remain constant. 
+This is a direct consequence of quantum states having to be normalized.
+Modelling lattices with continuous inlets or outlets is usually done in a hybrid manner, where the quantity loss or gain is applied classically after each circuit iteration \cite{jennings2026simulating}.
+This limitation further extends to boundary conditions and is the sole reason for imposing the L1-norm preserving restriction.
+
+The second limitation comes from setting the relaxation time $\tau=1$.
+While this is what allows the collision operator to be linear in the first place, it also limits the types phenomena the QLBM can simulate.
+The fixed relaxation time permanently locks the lattice viscosity, making complex physics such as turbulent flows or non-Newtonian fluids difficult to simulate \cite{kruger2016lattice}.

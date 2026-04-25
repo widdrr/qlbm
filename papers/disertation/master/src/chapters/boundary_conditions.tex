@@ -4,8 +4,8 @@
 In an LBM simulation, enforcing boundary conditions involves determining unknown incoming distributions at boundary nodes based on known outgoing distributions and other auxiliary information.
 Depending on how the boundary is encoded into the lattice, LBM simulators distinguish between
 \begin{itemize}
-    \item Wet-Nodes: The boundary conditions are applied directly on the fluid nodes at the boundary.
-    \item Link-Wise: The boundary conditions are applied between fluid nodes and solid nodes.
+    \item \textbf{Wet-Nodes}: The boundary conditions are applied directly on the fluid nodes at the boundary.
+    \item \textbf{Link-Wise}: The boundary conditions are applied between fluid nodes and solid nodes.
 \end{itemize} \cite{olbug:18}.
 
 Most of the existing literature opts to implement specific link-wise boundary conditions, such as bounce-back, directly in the circuit \cite{ljubomir2022quantum,jennings2026simulating,lee2025advanced}.
@@ -182,39 +182,6 @@ D2Q5 $4\times4$ & 0.3089 & 0.2271 & 154{,}585& 99{,}300& 157{,}689& 101{,}381\\
 The numerical experiment confirmed our mathematical inequality.
 Surprisingly, it also showed the merged circuit results in slightly fewer gates and shallower circuits.
 
-\section{Complexity Impact}
-\label{sec:bc-complexity}
-
-For the classical preprocessing, the cost of performing SVD can be ignored as it is only done once before simulation starts, getting amortized over the iterations.
-
-The circuit depth of the transpiled circuit does not change its complexity class, remaining at $\mathcal{O}(M\cdot N)$.
-What the presence of the boundary condition operator does impact is how close to the worst case our matrix gets.
-Because the operator is no longer diagonal, each unitary will have a significatly larger number of gates and circuit depth.
-
-To quantify this impact, I extended the previous transpilation experiment to include variations with boundary conditions defined.
-In both cases, boundary nodes were defined at the edge of the respective lattice.
-
-\begin{table}[H]
-\centering
-\caption{Transpiled gate count and circuit depth (gates / depth) per stage for BC configurations}
-\label{tab:transpilation_bc}
-\begin{tabular}{l c c r r r}
-\toprule
-Configuration & Qubits & BC Nodes & Collision & Collision + BC & Increase \\
-\midrule
-D1Q3 $M{=}4$  & 5 & 2 & 393 / 270         & 2{,}282 / 1{,}432    & $5.8\times$ \\
-D1Q3 $M{=}8$  & 6 & 2 & 786 / 540         & 9{,}451 / 6{,}008    & $12.0\times$ \\
-D1Q3 $M{=}16$ & 7 & 2 & 1{,}563 / 1{,}066 & 38{,}380 / 24{,}568  & $24.6\times$ \\
-D1Q3 $M{=}32$ & 8 & 2 & 3{,}110 / 2{,}107 & 154{,}605 / 99{,}320 & $49.7\times$ \\
-\midrule
-D2Q5 $4{\times}4$ & 8 & 4 & 3{,}219 / 2{,}188 & 154{,}610 / 99{,}320 & $48.0\times$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The data shows a substantial increase that further scales with the qubit count.
-Additionally, the number of boundary nodes appears to be insignificant, as evidenced by the 2D configuration having roughly the same number of gates as the 1D one with the same number of qubits.
-
 \section{Experimental Validation}
 \label{sec:bc-validation}
 
@@ -278,7 +245,7 @@ The full set of conditions is:
 \end{align*}
 
 For the corner node at $(2, 3)$, both $(+1,0)$ and $(0,+1)$ point into the wall.
-After reflecting, each outgoing link only has one remaining safe direction left: $(0,-1)$ and $(-1,0)$ respectively; because the other non-resting direction leads into the wall.
+After reflecting, each outgoing link only has one remaining safe direction left: $(0,-1)$ and $(-1,0)$ respectively.
 The full set of conditions is:
 \begin{align*}
     f_{(+1,0)}^{post}   &= 0 \\
@@ -304,3 +271,35 @@ The simulation again agrees with the classical one, however this RMSE plot exhib
     \label{fig:bc_2d_rmse}
 \end{figure}
 
+\section{Performance Impact}
+\label{sec:bc-complexity}
+
+For the classical preprocessing, the cost of performing SVD can be ignored as it is only done once before simulation starts, getting amortized over the iterations.
+
+The circuit depth of the transpiled circuit does not change its complexity class, remaining at $\mathcal{O}(M\cdot N)$.
+What the presence of the boundary condition operator does impact is how close to the worst case our matrix gets.
+Because the operator is no longer diagonal, each unitary will have a significatly larger number of gates and circuit depth.
+
+To quantify this impact, I extended the previous transpilation experiment to include variations with boundary conditions defined.
+In both cases, boundary nodes were defined at the edge of the respective lattice.
+
+\begin{table}[H]
+\centering
+\caption{Transpiled gate count and circuit depth (gates / depth) per stage for BC configurations}
+\label{tab:transpilation_bc}
+\begin{tabular}{l c c r r r}
+\toprule
+Configuration & Qubits & BC Nodes & Collision & Collision + BC & Increase \\
+\midrule
+D1Q3 $M{=}4$  & 5 & 2 & 393 / 270         & 2{,}282 / 1{,}432    & $5.8\times$ \\
+D1Q3 $M{=}8$  & 6 & 2 & 786 / 540         & 9{,}451 / 6{,}008    & $12.0\times$ \\
+D1Q3 $M{=}16$ & 7 & 2 & 1{,}563 / 1{,}066 & 38{,}380 / 24{,}568  & $24.6\times$ \\
+D1Q3 $M{=}32$ & 8 & 2 & 3{,}110 / 2{,}107 & 154{,}605 / 99{,}320 & $49.7\times$ \\
+\midrule
+D2Q5 $4{\times}4$ & 8 & 4 & 3{,}219 / 2{,}188 & 154{,}610 / 99{,}320 & $48.0\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The data shows a substantial increase that further scales with the qubit count.
+Additionally, the number of boundary nodes appears to be insignificant, as evidenced by the 2D configuration having roughly the same number of gates as the 1D one with the same number of qubits.

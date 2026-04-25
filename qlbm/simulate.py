@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 from typing import Optional
 from qiskit import QuantumCircuit, transpile
-from qiskit_aer import StatevectorSimulator
+from qiskit_aer import AerSimulator, StatevectorSimulator
 
 from .circuits import encode, encode_links, propagation, macros, recover_quantity_quantum_macros
 from .physics import get_collision_diagonal, bc_config_to_matrix, combine_collision_bc_matrices, collision_nonuniform
@@ -130,6 +130,106 @@ def simulate_flow(
                 initial_density = recover_quantity_quantum_macros(state, sites_per_dim, num_links, original_sum)
                 writer.writerow(initial_density.flatten(order='F'))
             current_iterations += iterations
+
+
+def simulate_flow_sampled(
+    initial_density: NDArray[np.float64],
+    configs: list[tuple[int, NDArray[np.float64], list[list[int]], list[float], np.float64, Optional[NDArray[np.float64]]]],
+    shots: int,
+) -> tuple[NDArray[np.float64], dict]:
+    simulator = AerSimulator()
+
+    sites_per_dim = list(initial_density.shape)
+    site_qubits_per_dim = [int(np.ceil(np.log2(sites))) for sites in sites_per_dim]
+    site_qubits = int(np.sum(site_qubits_per_dim))
+    num_sites = int(np.prod(sites_per_dim))
+
+    original_sum = np.float64(np.sum(initial_density))
+
+    total_shots_all = 0
+    used_shots_all = 0
+    ancilla_failed_all = 0
+
+    for config in configs:
+        iterations, velocity_field, links, weights, speed_of_sound, boundary_conditions = config
+
+        num_links = len(links)
+        link_qubits = int(np.ceil(np.log2(num_links)))
+        num_qubits = site_qubits + link_qubits + 1
+
+        collision_matrix = get_collision_diagonal(link_qubits, links, weights, velocity_field, speed_of_sound)
+
+        bc_matrix = None
+        if boundary_conditions is not None:
+            grid_size = np.prod(sites_per_dim)
+            padded_num_velocities = 2**link_qubits
+            nv_actual = boundary_conditions.shape[-1]
+            ndim_spatial = boundary_conditions.ndim - 2
+            if ndim_spatial > 1:
+                perm = list(reversed(range(ndim_spatial))) + [ndim_spatial, ndim_spatial + 1]
+                bc_flat = np.ascontiguousarray(
+                    np.transpose(boundary_conditions, perm)
+                ).reshape(grid_size, nv_actual, nv_actual)
+            else:
+                bc_flat = boundary_conditions
+            bc_matrix = bc_config_to_matrix(bc_flat, grid_size, padded_num_velocities)
+
+        combined_matrix = combine_collision_bc_matrices(collision_matrix, bc_matrix)
+
+        # Build gates (transpile once per config, not per iteration). No macros gate.
+        encode_links_gate = encode_links(link_qubits, num_links).to_gate(label='encode_links')
+        collision_gate = collision_nonuniform(site_qubits, link_qubits, combined_matrix).to_gate(label='collision')
+        propagation_gate = propagation(site_qubits_per_dim, link_qubits, links).to_gate(label='propagation')
+
+        for _ in range(iterations):
+            state = encode(initial_density, link_qubits)
+
+            qc = QuantumCircuit(num_qubits)
+            qc.initialize(state)
+            qc.append(encode_links_gate, list(range(site_qubits, num_qubits - 1)))
+            qc.append(collision_gate, list(range(num_qubits)))
+            qc.append(propagation_gate, list(range(num_qubits - 1)))
+            # macros intentionally omitted — link states are summed over below
+            qc.measure_all()
+
+            qc_t = transpile(qc, simulator)
+            counts = simulator.run(qc_t, shots=shots).result().get_counts()
+
+            amplitude_counts = np.zeros((num_sites, 2**link_qubits), dtype=np.float64)
+            used = 0
+            ancilla_failed = 0
+
+            for bitstring, count in counts.items():
+                bits = bitstring.replace(' ', '')
+                if bits[0] != '0':
+                    ancilla_failed += count
+                    continue
+                site_idx = int(bits[-site_qubits:], 2)
+                link_idx = int(bits[1:1 + link_qubits], 2)
+                if site_idx < num_sites:
+                    amplitude_counts[site_idx, link_idx] += count
+                    used += count
+
+            total_shots_all += shots
+            used_shots_all += used
+            ancilla_failed_all += ancilla_failed
+
+            if used == 0:
+                initial_density = np.full(sites_per_dim, original_sum / num_sites)
+            else:
+                density_flat = np.sum(np.sqrt(amplitude_counts), axis=1)
+                density_flat = density_flat / np.sum(density_flat)
+                initial_density = original_sum * density_flat.reshape(sites_per_dim, order='F')
+
+    total = total_shots_all if total_shots_all > 0 else 1
+    stats = {
+        'total_shots': total_shots_all,
+        'used_shots': used_shots_all,
+        'ancilla_failed_shots': ancilla_failed_all,
+        'ancilla_discard_fraction': ancilla_failed_all / total,
+    }
+
+    return initial_density, stats
 
 
 def simulate_flow_classical(

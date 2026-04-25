@@ -194,6 +194,20 @@ def create_bounceback_bc_1d(
     return bc
 
 
+def get_gaussian_2d_initial_distribution(
+    sites: tuple[int, int],
+    center: tuple[float, float],
+    width: float,
+    amplitude: float = 0.9,
+    background: float = 0.1,
+) -> NDArray[np.float64]:
+    x = np.arange(sites[0])
+    y = np.arange(sites[1])
+    X, Y = np.meshgrid(x, y, indexing='ij')
+    r2 = (X - center[0])**2 + (Y - center[1])**2
+    return background + amplitude * np.exp(-r2 / (2 * width**2))
+
+
 # ── 2D Boundary condition helpers ────────────────────────────────────────────
 
 def get_gaussian_ring_initial_distribution(
