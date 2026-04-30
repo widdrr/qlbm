@@ -178,7 +178,7 @@ Unlike a bit which is a scalar, a qubit is actually a vector, with
 forming a \emph{basis}, known as the \emph{Computational Basis}.
 
 It then follows that a qubit is not limited to the two basis states; in fact it can be any linear combination, as long as the qubit is \emph{normalized}.
-When that happens, we say the qubit is in \emph{superpositon}.
+When that happens, we say the qubit is in \emph{superposition}.
 For example: $\frac{1}{\sqrt2}\ket{0} + \frac{1}{\sqrt2}\ket{1}$ and $\frac{1}{\sqrt2}\ket{0} - \frac{1}{\sqrt2}\ket{1}$ are both equal superpositions of the computational basis states.
 They are so important they get shorthand notation: $\ket{+}$ and $\ket{-}$ respectively. These two states form the \emph{Hadamard basis}.
 
@@ -252,11 +252,11 @@ Despite qubits "storing" more information, that information is not directly acce
 To read the value of a qubit, a \emph{measurement} must be performed, and the result is always a basis state.
 
 When measuring a qubit that is in a superposition, one of the basis states is obtained at random.
-The probability of obtaining a specific state is equal to the norm squared of the state's coefficient the qubit. This is known as the \emph{Born Rule}
+The probability of obtaining a specific state is equal to the norm squared of the state's coefficient the qubit. This is known as the \emph{Born Rule}.
 For example the state $\frac{1}{\sqrt3}\ket{0} + \frac{\sqrt2}{\sqrt3}\ket{1}$ has a $\frac{1}{3}$ chance of yielding $\ket{0}$, with the rest being $\ket{1}$.
 This is why qubits had the restriction of being normalized, because the sum of measurement probabilities must equal 1.
 
-Another important consequence of this rule is that certain states are undistinguishalbe.
+Another important consequence of this rule is that certain states are indistinguishable.
 $\ket{\psi}$, $-\ket{\psi}$, $i\ket{\psi}$ all have the same measurement outcome distribution.
 In fact, $\ket{\psi} = e^{i\theta}{\psi}$ for all $\theta$. $e^{i\theta}$ is called the \emph{global phase}.
 
@@ -322,7 +322,7 @@ With this restriction in place, we can work out our $U$. From how we previously 
     \intertext{Imposing that $U$ be unitary, we can parametrize it in terms of $A$:}
     U &= \begin{pmatrix} A & \sqrt{I - A A^\dagger} \\ \sqrt{I - A^\dagger A} & -A^\dagger \end{pmatrix}
 \end{align*}
-Mathematically, $U$ is known as a Sz.-Nagy dilation of $A$ \cite{szHokefalvi1954contractions}, this particular form beign known as the Schaffer form \cite{schaffer1955unitary}.
+Mathematically, $U$ is known as a Sz.-Nagy dilation of $A$ \cite{szHokefalvi1954contractions}, this particular form being known as the Schaffer form \cite{schaffer1955unitary}.
 The full derivation can be found in Appendix~\ref{app:Schaffer}
 In Quantum Computing, $U$ is known as a \emph{block encoding} of $A$.
 
@@ -395,7 +395,7 @@ The algorithm itself consists of two main parts:
 \end{enumerate}
 Kacewicz's ODE algorithm is a hybrid algorithm that makes use of the \emph{Quantum Amplitude Estimation Algorithm} \cite{brassard2002quantum} to achieve a speedup over classical methods.
 
-To validate the algorithm, Gaitan uses it to simulate an inviscid compressible 1D flow through a convergent-divergent nozzle
+To validate the algorithm, Gaitan uses it to simulate an inviscid compressible 1D flow through a convergent-divergent nozzle.
 The simulations were performed using Qiskit \cite{qiskit2024} and showed great agreement with the exact analytical solution.
 
 To determine the performance gain, Gaitan performs a complexity analysis of the algorithm compared with both deterministic and random classical algorithms.
@@ -489,7 +489,7 @@ That qubit allows Budinski to implement the normally non-unitary collision opera
 
 The propagation step is implemented similar to a quantum walk \cite{childs2009universal}, by shifting the qubits left and right respectively.
 
-Budinski tested his QLBM by simulating a simple adevction-diffusion using both D1Q2 and D2Q5 lattices.
+Budinski tested his QLBM by simulating a simple advection-diffusion using both D1Q2 and D2Q5 lattices.
 The results match both analytical solutions and classical simulations.
 
 He later extended the method to the Navier-Stokes equations \cite{ljubomir2022quantum} via the stream-vorticity formulation and validated his results in a lid-driven cavity flow simulation.

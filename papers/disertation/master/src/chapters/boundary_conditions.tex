@@ -11,7 +11,7 @@ Depending on how the boundary is encoded into the lattice, LBM simulators distin
 Most of the existing literature opts to implement specific link-wise boundary conditions, such as bounce-back, directly in the circuit \cite{ljubomir2022quantum,jennings2026simulating,lee2025advanced}.
 This approach benefits from being able to efficiently embed simple conditions directly into the circuit.
 
-For our simulator we wanted to try a fully parametrized approach, able to be customized for a large class of boundary conditions, then evaluate the incured cost of generality.
+For our simulator we wanted to try a fully parametrized approach, able to be customized for a large class of boundary conditions, then evaluate the incurred cost of generality.
 \section{Linear Boundary Formulation}
 \label{sec:bc-formulation}
 
@@ -72,7 +72,7 @@ Using these facts, $\Sigma$ can be decomposed as a linear combination of two uni
 
 Note however that unlike with the collision operator we do not have any guarantees $\Sigma$ will be contractive.
 To solve this, we took the simplest approach possible and normalized $\Sigma$ via dividing by its spectral norm.
-This scaling is irelevant to our overall algorithm, thanks to the renormalization performed at the end of each simulation step.
+This scaling is irrelevant to our overall algorithm, thanks to the renormalization performed at the end of each simulation step.
 
 Lastly, boundary nodes should be exempt from the normal collision operator. In a way, the boundary condition can be thought of as a special collision operator for that node.
 Mathematically, this translates in replacing the corresponding entries in the collision operator with identities.
@@ -107,7 +107,7 @@ Intuitively, this is like streaming ahead, applying the post-streaming boundary 
 \subsection{Probability Analysis}
 
 Merging the two operations into a single LCU is only worthwhile if the success probability is higher than the separate approach.
-We will both prove this fact mathematically and perform a numerical experiments to quantify the probability gain.
+We will both prove this fact mathematically and perform a numerical experiment to quantify the probability gain.
 For the purpose of this analysis, the streaming operator is ignored, replaced by the identity.
 
 Recall the probability of measuring the correct LCU substate from Formula~{\ref{eq:lcu_prob}}.
@@ -274,11 +274,15 @@ The simulation again agrees with the classical one, however this RMSE plot exhib
 \section{Performance Impact}
 \label{sec:bc-complexity}
 
-For the classical preprocessing, the cost of performing SVD can be ignored as it is only done once before simulation starts, getting amortized over the iterations.
+Before analyzing the circuit, we must consider the classical preprocessing.
+For a square matrix of size $k \times k$, the complexity of the SVD algorithm is $\mathcal{O}(k^3)$ \cite{horn2012matrix}.
+Since the combined collision-boundary matrix has $k = M\cdot N$, the cost of the classical preprocessing is $\mathcal{O}((M \cdot N)^3)$, or $\mathcal{O}(2^{3(m+n)})$ in terms of qubit counts.
+This preprocessing is only performed once per distinct configuration, so the upfront computation is amortized across the simulation iterations.
+However, since the complexity itself is exponential, this step remains a bottleneck requiring an astronomical number of iterations to negate.
 
 The circuit depth of the transpiled circuit does not change its complexity class, remaining at $\mathcal{O}(M\cdot N)$.
-What the presence of the boundary condition operator does impact is how close to the worst case our matrix gets.
-Because the operator is no longer diagonal, each unitary will have a significatly larger number of gates and circuit depth.
+The inclusion of the boundary condition operator does however force the matrix closer to the theoretical worst case complexity.
+Because the operator is no longer diagonal, each unitary will have a significantly larger number of gates and circuit depth.
 
 To quantify this impact, we extended the previous transpilation experiment to include variations with boundary conditions defined.
 In both cases, boundary nodes were defined at the edge of the respective lattice.

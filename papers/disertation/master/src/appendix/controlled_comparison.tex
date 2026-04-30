@@ -3,7 +3,7 @@
 
 After implementing boundary conditions, we ran into very slow simulations that were impractical to run.
 Analyzing the runtime, we managed to isolate the bottleneck to the controlled unitaries in the collision step.
-On a whim we decided to try implementing the controlled gate by manually building the matrix via Kronecker-product construction and apply it as a single \texttt{UnitaryGate}.
+For the sake of comparison, we tried implementing the controlled gate by manually building the matrix via Kronecker-product construction and apply it as a single \texttt{UnitaryGate}.
 To our surprise, this sped up simulation quite a bit.
 
 Performing a detailed benchmark revealed the explanation: \texttt{UnitaryGate} is considered elementary in the default Aer Simulator.

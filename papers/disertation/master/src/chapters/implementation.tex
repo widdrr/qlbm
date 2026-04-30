@@ -15,7 +15,7 @@ An iteration of the algorithm consists of 4 steps:
     \item \textbf{Initialization}: Prepare the quantum state with the initial distribution function.
     \item \textbf{Collision}: Apply the collision operator to update the link distributions.
     \item \textbf{Streaming}: Propagate the link distributions to neighboring sites based on the link velocities.
-    \item \textbf{Compute macros}: Recover the macroscopic distribution from the final state.
+    \item \textbf{Computation Macroscopic Quantities}: Recover the macroscopic distribution from the final state.
 \end{enumerate}
 
 Performing multiple iterations requires reinitializing the quantum state with the updated distribution function after each iteration.
@@ -209,8 +209,9 @@ This is the parametrization for a Taylor-Green Vortex, a classic benchmark for L
     \label{fig:3d_snapshots}
 \end{figure}
 
-This configuration yielded the highest error out of all the experiments at around $10^{-4}$
-We do not yet have a concrete explanation for it, but the current hypothesis is the complex velocity field.
+This configuration yielded the highest error out of all the experiments at around $10^{-4}$.
+Despite our considerable investigation, we have not yet identified the exact mechanism behind the error.
+Based on empirical observations, our current hypothesis is that it is caused by complex, spatially varying velocity fields. 
 
 \begin{figure}[H]
     \centering
@@ -254,13 +255,13 @@ This leads credence to the hypothesis for complex velocity fields.
 
 For a classical LBM simulating the ADE, both the time and space complexities are linear in the total number of lattice sites and link directions.
 Given a lattice with a total of $M=\sum_{i=0}^{d}M_i$ sites and $N$ propagation directions, the complexity is $\mathcal{O}(M\cdot N)$ \cite{kruger2016lattice}.
-This is complexity does not depend on the specifics such as the velocity field.
+This complexity does not depend on the specifics such as the velocity field.
 
 For our QLBM we already established in the previous section that the total number of qubits used is $n+m+1$. Writing the sum in terms of $M$ and $N$ results in a logarithmic complexity: $\mathcal{O}(\log{M} + log{N})$.
 Since we are encoding information in superposition states, it's natural to see an improvement here.
 
 Analyzing the time complexity is not so straightforward.
-First of all, in a quantum circuit we are usually interested in the \emph{circuit depth}: the number sequential of quantum gates used to implement the circuit as a function of the size of the input.
+First of all, in a quantum circuit we are usually interested in the \emph{circuit depth}: the number of sequential of quantum gates used to implement the circuit as a function of the size of the input.
 When counting this depth, gates applied "in parallel" on different qubits can be considered constant time.
 In addition, we only count elementary gates, ie: the aforementioned \texttt{DiagonalGate} is not constant time, but a perhaps exponential depending on the gate decomposition.
 Which gates are elementary usually depends on the physical implementation of the quantum computer used.
@@ -287,9 +288,9 @@ That being said, this worst case is only achieved when $q$ itself is significant
 In the average case, $q \ll N$, usually between 1 and 2, so the average case complexity is $\mathcal{O}(N\cdot\log{M})$
 Note however that this assumes arbitrary multi-controlled gates are elementary, which is a fairly strong assumption.
 
-\paragraph*{Macros computation} is linear with respect to number of links: $\mathcal{O}(N)$; as previously described.
+\paragraph*{Macroscopic Quantities Computation} is linear with respect to number of links: $\mathcal{O}(N)$; as previously described.
 
-Since all of these steps steps are in sequence, the total complexity is dominated by either the initialization or the collision step.
+Since all of these steps are in sequence, the total complexity is dominated by either the initialization or the collision step.
 The actual details will depend heavily on the particular simulation parameters chosen, mostly the velocity field.
 
 \subsection{Numerical Benchmarks}
@@ -308,7 +309,7 @@ Otherwise it follows the expected trend as the qubit count grows.
 
 The streaming step also shows a surprisingly high circuit depth compared to the analytical result.
 In reality it is not so surprising considering that the multi-controlled gates used are not elementary.
-Another comtributing factor is that at low $N$ and $M$ values, constants dominate the complexity.
+Another contributing factor is that at low $N$ and $M$ values, constants dominate the complexity.
 This is supported by the observation that despite starting fairly equally, collision overtakes streaming in larger simulations.
 Lastly, the final depth is mostly influenced by lattice sites per dimension: the 4x4x4 3D simulation results in a smaller circuit compared to the 8x8 2D ones, despite identical $M$.
 
@@ -365,5 +366,3 @@ Iteration & Init.\ Gates & Total Gates \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\section{}

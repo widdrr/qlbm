@@ -1,7 +1,7 @@
 \chapter{Limitations and Open Problems}
 \label{chapter:discussion}
 
-While the simulator shows decent agreement with its classical counterpart, in order for it to be practical it must provide a tangible quantum speedup.
+While the simulator shows agreement with its classical counterpart, in order for it to be practical it must provide a tangible quantum speedup.
 Some limitations are inherent to the QLBM and are active areas of research in the field, others are unique to the ideas we explored in this thesis.
 
 \section{Quantum State Tomography}
@@ -17,7 +17,7 @@ To make matters worse, the usage of the LCU technique introduces a chance that a
 The silver lining is that we do not require the entire quantum state, only the absolute values of each amplitude. This lowers the number of shots needed.
 
 To illustrate the impact, we numerically compared the shot-based QST approach to the idealized statevector readout.
-We removed the macros computation circuit from the shot-based simulator, since it is now done classically.
+We removed the macroscopic quantities computation circuit from the shot-based simulator, since it is now done classically.
 For the experiment, we would run an iteration, perform a computational basis measurement and add the value to the histogram if the ancilla was $\ket{0}$ or discard otherwise.
 We would repeat this process for a predetermined number of shots, then compute the RMSE with the statevector simulation.
 Shot counts were spaced logarithmically and each trial was repeated 5 times to smooth out the variance for lower counts.
@@ -59,10 +59,10 @@ A full explanation can be found in Appendix~\ref{app:variance_stabilization}.
     \label{fig:qst_discard}
 \end{figure}
 
-The percentange of discarded shots due to measuring the ancilla in the $\ket{1}$ state quickly converges to ~$70\%$, consistent with the previous success probability experiment. Even so, almost tripling the shot count further exacerbates the bottleneck of QST.
+The percentage of discarded shots due to measuring the ancilla in the $\ket{1}$ state quickly converges to ~$70\%$, consistent with the previous success probability experiment. Even so, almost tripling the shot count further exacerbates the bottleneck of QST.
 
 Given that the need for QST is the most severe bottleneck of the method, there is plenty of active research on how to mitigate it, such as Kocherla et al's Restless QLBM which can delay the need for measurement until the end of the simulation \cite{kocherla2024fully}.
-While the theoretical improvement is substantial, their simulator tackles a simplified setup that does not recover the full Botlzmann Equation.
+While the theoretical improvement is substantial, their simulator tackles a simplified setup that does not recover the full Boltzmann Equation.
 
 A way to sidestep this limitation is to no longer care about the full distribution function.
 Tiwari et al. managed to run 2D and 3D simulations on real quantum hardware by parametrizing the distribution \cite{tiwari2025algorithmic}.
