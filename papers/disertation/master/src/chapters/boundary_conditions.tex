@@ -2,7 +2,7 @@
 \label{chapter:boundary-conditions}
 
 In an LBM simulation, enforcing boundary conditions involves determining unknown incoming distributions at boundary nodes based on known outgoing distributions and other auxiliary information.
-Depending on how the boundary is encoded into the lattice, LBM simulators distinguish between
+Depending on how the boundary is encoded into the lattice, LBM simulators distinguish between:
 \begin{itemize}
     \item \textbf{Wet-Nodes}: The boundary conditions are applied directly on the fluid nodes at the boundary.
     \item \textbf{Link-Wise}: The boundary conditions are applied between fluid nodes and solid nodes.
@@ -16,8 +16,8 @@ For our simulator we wanted to try a fully parametrized approach, able to be cus
 \label{sec:bc-formulation}
 
 Due to the linear constraints of quantum operations, we focused on modeling the unknown distributions as linear combinations of the known distributions at the boundary nodes.
-This is a well known wet-node approach, detailed by \cite{zou1997pressure}.
-Additionally we have chosen to only consider boundary conditions that preserve the total quantity at the boundary node.
+This is a well-known wet-node approach, detailed by \cite{zou1997pressure}.
+Additionally, we have chosen to only consider boundary conditions that preserve the total quantity at the boundary node.
 Mathematically, this can be expressed as:
 
 \begin{align*}
@@ -27,11 +27,11 @@ Mathematically, this can be expressed as:
 \intertext{with the required quantity conservation property}
 & \sum_i f_{i}^{post} = \sum_i f_{i}^{pre}
 \end{align*}
-where $x$ is the lattice site, $f_i$ the distribution for link $i$ and $B_x$ the boundary condition operator for site x.
+where $x$ is the lattice site, $f_i$ the distribution for link $i$ and $B_x$ the boundary condition operator for site $x$.
 
 From the quantity preservation restriction, it follows that for each $B_x$ all columns sum up to 1, making them left-stochastic matrices.
 Each $B_x$ can be embedded in a larger operator $B$, describing all boundary conditions for the entire lattice.
-Simplest way to imagine it is to start with a block-diagonal containing all defined $B_x$, with $I$ instead for non-boundary lattices.
+The simplest way to imagine it is to start with a block-diagonal containing all defined $B_x$, with $I$ instead for non-boundary lattices.
 
 \begin{equation}
 B = \begin{pmatrix}
@@ -45,8 +45,8 @@ B = \begin{pmatrix}
 From the construction we can see it is also stochastic. This is important to ensure the stability of the simulation.
 
 
-Because of the chosen quantum state encoding, link distributions for a given site are not adjacent in the vector representation of the quantum state; instead all distributions of a given link are adjacent.
-The real $B$ matrix will however be a permutation of the block-diagonal variant, meaning all relevant properties are invariant, such as eigenvalues and stochasticity.
+Because of the chosen quantum state encoding, link distributions for a given site are not adjacent in the vector representation of the quantum state; instead, all distributions of a given link are adjacent.
+The real $B$ matrix will, however, be a permutation of the block-diagonal variant, meaning all relevant properties are invariant, such as eigenvalues and stochasticity.
 
 \section{Quantum Implementation via LCU and SVD}
 \label{sec:bc-implementation}
@@ -70,23 +70,23 @@ Using these facts, $\Sigma$ can be decomposed as a linear combination of two uni
     B = \frac{1}{2} (U (\Sigma + i\sqrt{I - \Sigma^2}) V^{\dagger} + U (\Sigma - i\sqrt{I - \Sigma^2}) V^{\dagger})
 \end{equation}
 
-Note however that unlike with the collision operator we do not have any guarantees $\Sigma$ will be contractive.
+Note, however, that unlike with the collision operator, we do not have any guarantees $\Sigma$ will be contractive.
 To solve this, we took the simplest approach possible and normalized $\Sigma$ via dividing by its spectral norm.
 This scaling is irrelevant to our overall algorithm, thanks to the renormalization performed at the end of each simulation step.
 
 Lastly, boundary nodes should be exempt from the normal collision operator. In a way, the boundary condition can be thought of as a special collision operator for that node.
-Mathematically, this translates in replacing the corresponding entries in the collision operator with identities.
+Mathematically, this translates to replacing the corresponding entries in the collision operator with identities.
 \section{Pre-Streaming Boundary Conditions}
 \label{sec:bc-optimization}
 
-If we were to use the standard wet node scheme of performing collision followed by streaming and lastly apply boundary conditions, we would have to perform two independent LCU circuits.
+If we were to use the standard wet node scheme of performing collision followed by streaming and lastly applying boundary conditions, we would have to perform two independent LCU circuits.
 The consequences of such an operation would be a decrease in the success probability of the entire circuit, since we would need each independent LCU to succeed.
 
 To solve this, we decided to apply the boundary conditions \emph{before} streaming the distributions.
 Now the two operators are consecutive and can be replaced with a single combined operator, which will be decomposed via SVD and applied with a single LCU.
 
 
-It is straightforward to prove equivalence with post-streaming boundary conditions, in fact every post-streaming boundary condition operator $B_{post}$ can be converted to a $B_{pre}$ via linear transformations.
+It is straightforward to prove equivalence with post-streaming boundary conditions; in fact, every post-streaming boundary condition operator $B_{post}$ can be converted to a $B_{pre}$ via linear transformations.
 Begin by considering a single iteration of each circuit:
 \begin{align*}
     U_{pre} = S B_{pre} C \\
@@ -115,7 +115,7 @@ Recall the probability of measuring the correct LCU substate from Formula~{\ref{
 While not required for correctness, we can normalize the $C$ operator as well, obtaining $\tilde{C} = C / \|C\|_2$.
 Due to the classical renormalization we perform, it increases the success probability of the LCU.
 
-If $\ket{\psi}$ is the initial state, then probability of success for the $C$ operator is:
+If $\ket{\psi}$ is the initial state, then the probability of success for the $C$ operator is:
 \begin{equation*}
     P_C = \frac{\| \tilde{C} \ket{\psi} \|_2^2}{(0.5 + 0.5)^2} = \frac{\| C \ket{\psi} \|_2^2}{\|C\|_2^2}
 \end{equation*}
@@ -156,7 +156,7 @@ Because these norms are strictly positive scalars, squaring both sides and takin
 In order to quantify the improvement, we directly compared the merged and sequential approaches.
 We applied both circuits (without the streaming) on the same initial states.
 We computed the probability by looking at the total amplitude of the $\ket{0}$ and $\ket{00}$ substates respectively.
-Additionally we also counted the total gates and circuit depths in the previously used IBM Eagle gate set.
+Additionally, we counted the total gates and circuit depths in the previously used IBM Eagle gate set.
 
 \begin{table}[H]
 \centering
@@ -206,11 +206,11 @@ At site $N-2$ (right wall):
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{src/img/figures/bc_1d_snapshots.png}
-    \caption{Classical simulation results showing the Gaussian profile being contained by the solid walls. Given enough iterations it would eventually flatten completely.}
+    \caption{Classical simulation results showing the Gaussian profile being contained by the solid walls. Given enough iterations, it would eventually flatten completely.}
     \label{fig:bc_snapshots}
 \end{figure}
 
-The error is negligible up to floating point precision. 
+The error is negligible up to floating-point precision.
 Interestingly, this experiment shows the same pattern of decreased error once the velocity field becomes simple.
 
 \begin{figure}[H]
@@ -234,7 +234,7 @@ The general idea of the boundary condition is to reflect $20\%$ of the outgoing 
 A link is considered safe if it does not stream into the wall. The rest link $(0,0)$ is always left unchanged.
 There are two flavors of boundary nodes with slightly different conditions: edges and corners.
 
-Consider the edge node at $(6, 4)$. The outgoing only link is $(-1,0)$, which will get split between $(+1,0)$ and the two tangential directions $(0,-1)$ and $(0,+1)$.
+Consider the edge node at $(6, 4)$. The only outgoing link is $(-1,0)$, which will get split between $(+1,0)$ and the two tangential directions $(0,-1)$ and $(0,+1)$.
 The full set of conditions is:
 \begin{align*}
     f_{(-1,0)}^{post} &= 0 \\
@@ -262,7 +262,7 @@ The full set of conditions is:
     \label{fig:bc_2d_snapshots}
 \end{figure}
 
-The simulation again agrees with the classical one, however this RMSE plot exhibits a unique roughness compared to the previous ones.
+The simulation again agrees with the classical one; however, this RMSE plot exhibits a unique roughness compared to the previous ones.
 
 \begin{figure}[H]
     \centering
@@ -281,7 +281,7 @@ This preprocessing is only performed once per distinct configuration, so the upf
 However, since the complexity itself is exponential, this step remains a bottleneck requiring an astronomical number of iterations to negate.
 
 The circuit depth of the transpiled circuit does not change its complexity class, remaining at $\mathcal{O}(M\cdot N)$.
-The inclusion of the boundary condition operator does however force the matrix closer to the theoretical worst case complexity.
+The inclusion of the boundary condition operator does, however, force the matrix closer to the theoretical worst case complexity.
 Because the operator is no longer diagonal, each unitary will have a significantly larger number of gates and circuit depth.
 
 To quantify this impact, we extended the previous transpilation experiment to include variations with boundary conditions defined.

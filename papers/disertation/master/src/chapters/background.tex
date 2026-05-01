@@ -20,13 +20,13 @@ Another equation commonly used is the \emph{Advection-Diffusion Equation}:
     \frac{\partial}{\partial t}\Phi = D\nabla^{2}\Phi - \nabla \cdot (\mathbf{u}\Phi)
     \label{eq:advection-diffusion}
 \end{equation}
-Where $\Phi(x)$ is the scalar field, $D$ is the diffusion coefficient and $\mathbf{u(x)}$ is the velocity field.
+where $\Phi(x)$ is the scalar field, $D$ is the diffusion coefficient and $\mathbf{u(x)}$ is the velocity field.
 This equation is used to describe systems governed by two phenomena:
 \begin{itemize}
     \item \textbf{Diffusion}: The scalar quantity disperses across the medium.
     \item \textbf{Advection}: The scalar quantity moves according to the bulk motion of the medium.
 \end{itemize} 
-Examples of usecases for this equation include heat transfer or the physical transport of pollutants through air/water \cite{stockie2011mathematics}.
+Examples of use cases for this equation include heat transfer or the physical transport of pollutants through air/water \cite{stockie2011mathematics}.
 
 Because of the lack of analytical solutions in the general case, numerical methods are required to solve them for simulations.
 The basic approach is to discretize the equations and iteratively solve them in time steps.
@@ -38,7 +38,7 @@ The probability density of these particles evolves according to the \emph{Boltzm
     \label{eq:boltzmann_general}
     \frac{\partial}{\partial t}f + \frac{\mathbf{p}}{m} \cdot \nabla f + \mathbf{F} \cdot \frac{\partial}{\partial \mathbf{p}}f = \Omega(f)
 \end{equation}
-where $f$ is the particle distribution function, $\pmb{p}$ is the momentum, $m$ is the mass, $\pmb{F}$ is the body (external) force and $\omega(f)$ is the collision operator.
+where $f$ is the particle distribution function, $\pmb{p}$ is the momentum, $m$ is the mass, $\pmb{F}$ is the body (external) force and $\Omega(f)$ is the collision operator.
 
 One of the most widespread methods for mesoscale flows is the \emph{Lattice Boltzmann Method} (LBM) \cite{chen1998lattice}, which we detail in the following section.
 
@@ -132,10 +132,10 @@ The evolution of the discrete distribution function $f_i$ at position $\mathbf{x
 \end{equation}
 where $\mathbf{e}_i$ are the discrete lattice velocities and $\Omega_i$ is the collision operator.
 
-In a numerical simulation, this is usually done in two distinct steps
+In a numerical simulation, this is usually done in two distinct steps:
 
 \paragraph{1. Collision Step:}
-the distributions are modified by the collision operator, which encodes the specific mesoscale behavior of the system being modeled
+the distributions are modified by the collision operator, which encodes the specific mesoscale behavior of the system being modeled:
 \begin{equation}
     f_i^*(\mathbf{x}, t) = f_i(\mathbf{x}, t) + \Omega_i(f)
     \label{eq:collision_general}
@@ -163,51 +163,51 @@ Despite being developed from a mesoscale perspective, LBMs can be used for large
 \section{Quantum Computing Fundamentals}
 \label{sec:qc-basics}
 
-Classical computing, when stripped of all abstraction and boiled down to its purest form is just applying specific operations (gates) on units of information (bits).
+Classical computing, when stripped of all abstraction and boiled down to its purest form, is just applying specific operations (gates) on units of information (bits).
 A chain of gates is called a Circuit or Algorithm, depending on the context.
 
 While the fundamental principles involved are vastly different, Quantum Computing, in particular the Quantum Circuit formalism, mirrors this paradigm.
 
 \paragraph*{The Qubit}
 is the quantum counterpart for the bit, as the name suggests. Abstracting away the physical ways they are implemented, a qubit can store a binary value: 0 or 1.
-Qubits are written using \emph{bra-ket} notation: $\ket{0}$, $\ket{1}$, $\ket{x}$, $\ket{i}$, $\ket{\psi}$, $\ket{\phi}$
-Unlike a bit which is a scalar, a qubit is actually a vector, with 
+Qubits are written using \emph{bra-ket} notation: $\ket{0}$, $\ket{1}$, $\ket{x}$, $\ket{i}$, $\ket{\psi}$, $\ket{\phi}$.
+Unlike a bit, which is a scalar, a qubit is actually a vector, with
 \begin{equation*}
-  \ket{0} = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \text{and} \ket{1} = \begin{pmatrix} 0 \\ 1 \end{pmatrix}
+  \ket{0} = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \text{ and } \ket{1} = \begin{pmatrix} 0 \\ 1 \end{pmatrix}
 \end{equation*}
 forming a \emph{basis}, known as the \emph{Computational Basis}.
 
-It then follows that a qubit is not limited to the two basis states; in fact it can be any linear combination, as long as the qubit is \emph{normalized}.
+It then follows that a qubit is not limited to the two basis states; in fact, it can be any linear combination, as long as the qubit is \emph{normalized}.
 When that happens, we say the qubit is in \emph{superposition}.
 For example: $\frac{1}{\sqrt2}\ket{0} + \frac{1}{\sqrt2}\ket{1}$ and $\frac{1}{\sqrt2}\ket{0} - \frac{1}{\sqrt2}\ket{1}$ are both equal superpositions of the computational basis states.
 They are so important they get shorthand notation: $\ket{+}$ and $\ket{-}$ respectively. These two states form the \emph{Hadamard basis}.
 
 Moreover, the coefficients are not restricted to real numbers: $\frac{1}{\sqrt2}\ket{0} + \frac{i}{\sqrt2}\ket{1}$ and $\frac{1}{\sqrt2}\ket{0} - \frac{i}{\sqrt2}\ket{1}$
-are yet again important states: $\ket{+i}$ (or simply $\ket{i})$ and $\ket{-i}$ (not to be confused with $-\ket{i}$)
+are yet again important states: $\ket{+i}$ (or simply $\ket{i}$) and $\ket{-i}$ (not to be confused with $-\ket{i}$).
 The coefficient of a specific state in superposition is called the \emph{amplitude} of that state.
 
 A register of multiple qubits is normally described by the \emph{tensor product} of the individual qubits.
 \begin{equation*}
     \ket{0}\ket{+} = \ket{0} \otimes \ket{+} = \ket{0} \otimes (\frac{1}{\sqrt2}\ket{0} + \frac{1}{\sqrt2}\ket{1}) = \frac{1}{\sqrt2}\ket{00} + \frac{1}{\sqrt2}\ket{01}
 \end{equation*}
-Note, for products of computational basis states, notation is usually shortened: $\ket{0}\ket{0} = \ket{00}$
+Note, for products of computational basis states, notation is usually shortened: $\ket{0}\ket{0} = \ket{00}$.
 
 When moving to systems of multiple qubits, the representation power of the qubit becomes more apparent.
-A register of 3 bits can represent 1 of 8 distinct values, but a register of 3 qubits represents stores up to 8 complex coefficients at once.
+A register of 3 bits can represent 1 of 8 distinct values, but a register of 3 qubits stores up to 8 complex coefficients at once.
 
 \paragraph*{Quantum Gates}
 are what is applied to qubits in order to change their states and perform computation.
-While there is only one single-bit classical gate ($\text{NOT}$; excluding the no-op gate), there are infinite single-qubit quantum gates.
+While there is only one single-bit classical gate ($\text{NOT}$; excluding the no-op gate), there are infinitely many single-qubit quantum gates.
 Since qubits are vectors, naturally quantum gates end up being described by linear transformations (matrices) and applying a gate to a qubit is equivalent to matrix-vector multiplication.
 The only restriction is that these quantum gates must be \emph{unitary}, in order to keep the qubits normalized. As a side effect this also means quantum gates are always invertible,
-the inverse of a quantum gate being its conjugate transpose: $MM^{\dagger} = M^{\dagger}M = I$
+the inverse of a quantum gate being its conjugate transpose: $MM^{\dagger} = M^{\dagger}M = I$.
 
 \begin{equation*}
     H\ket{0} = \begin{pmatrix} \frac{1}{\sqrt{2}}  & \frac{1}{\sqrt{2}}  \\ \frac{1}{\sqrt{2}}  & -\frac{1}{\sqrt{2}}  \end{pmatrix} \begin{pmatrix} 1 \\ 0 \end{pmatrix} = \begin{pmatrix} \frac{1}{\sqrt{2}} \\ \frac{1}{\sqrt{2}} \end{pmatrix} = \ket{+}
 \end{equation*}
 This $H$ gate is known as the \emph{Hadamard Gate}, useful for creating equal superpositions of the basis states.
 
-Another common gate is the quantum equivalent to the $\text{NOT}$ gate: $X$ gate and it functions accordingly: $X\ket{0} = \ket{1}$ and $X\ket{1} = \ket{0}$ (An alternative description to the full matrix is defining what the gate does to the computational basis states)
+Another common gate is the quantum equivalent to the $\text{NOT}$ gate: the $X$ gate and it functions accordingly: $X\ket{0} = \ket{1}$ and $X\ket{1} = \ket{0}$ (an alternative description of the full matrix is defining what the gate does to the computational basis states).
 The interesting behavior comes from the fact that quantum gates are linear transformations, which means they distribute over addition and scalar multiplication.
 
 \begin{equation*}
@@ -216,7 +216,7 @@ The interesting behavior comes from the fact that quantum gates are linear trans
 This application of a quantum gate over an entire superposition is known as \emph{quantum parallelism}.
 
 We can also have multiple-qubit gates describing operations impossible to decompose into single qubit gates.
-Consider this gate
+Consider this gate:
 \begin{equation*}
     \text{CNOT} = \begin{pmatrix} 
 1 & 0 & 0 & 0 \\ 
@@ -236,7 +236,7 @@ It is described by the following transformations to the 2-qubit computational ba
 \end{aligned}
 \end{equation*}
 This is the \emph{Conditional-NOT gate}, negating the second qubit if and only if the first is $\ket{1}$.
-The first qubit is called the \emph{control} with the second being the \emph{target}
+The first qubit is called the \emph{control} with the second being the \emph{target}.
 This pattern is common and many single qubit gates have \emph{controlled} versions.
 
 Now observe what happens when the control qubit is in a superposition:
@@ -244,7 +244,7 @@ Now observe what happens when the control qubit is in a superposition:
     \text{CNOT}\ket{+}\ket{0} = \text{CNOT}(\frac{1}{\sqrt2}\ket{00} + \frac{1}{\sqrt2}\ket{10}) = \frac{1}{\sqrt2}(\text{CNOT}\ket{00} + \text{CNOT}\ket{10}) = \frac{1}{\sqrt2}(\ket{00} + \ket{11})
 \end{equation*}
 The resulting state, $\frac{1}{\sqrt2}(\ket{00} + \ket{11})$, cannot be decomposed as the tensor product of two individual qubits.
-The values of the two qubits became linked, they are no longer independent. This is known as \emph{entanglement} and is another cornerstone of quantum computing. 
+The values of the two qubits became linked; they are no longer independent. This is known as \emph{entanglement} and is another cornerstone of quantum computing. 
 
 \paragraph*{Measurement}
 is the one concept that does not exactly have a classical analogue, but is integral for quantum computing.
@@ -252,13 +252,13 @@ Despite qubits "storing" more information, that information is not directly acce
 To read the value of a qubit, a \emph{measurement} must be performed, and the result is always a basis state.
 
 When measuring a qubit that is in a superposition, one of the basis states is obtained at random.
-The probability of obtaining a specific state is equal to the norm squared of the state's coefficient the qubit. This is known as the \emph{Born Rule}.
-For example the state $\frac{1}{\sqrt3}\ket{0} + \frac{\sqrt2}{\sqrt3}\ket{1}$ has a $\frac{1}{3}$ chance of yielding $\ket{0}$, with the rest being $\ket{1}$.
-This is why qubits had the restriction of being normalized, because the sum of measurement probabilities must equal 1.
+The probability of obtaining a specific state is equal to the norm squared of the state's amplitude in the superposition. This is known as the \emph{Born Rule}.
+For example, the state $\frac{1}{\sqrt3}\ket{0} + \frac{\sqrt2}{\sqrt3}\ket{1}$ has a $\frac{1}{3}$ chance of yielding $\ket{0}$, with the rest being $\ket{1}$.
+This is why qubits have the restriction of being normalized, because the sum of measurement probabilities must equal 1.
 
 Another important consequence of this rule is that certain states are indistinguishable.
 $\ket{\psi}$, $-\ket{\psi}$, $i\ket{\psi}$ all have the same measurement outcome distribution.
-In fact, $\ket{\psi} = e^{i\theta}{\psi}$ for all $\theta$. $e^{i\theta}$ is called the \emph{global phase}.
+In fact, $\ket{\psi} = e^{i\theta}\ket{\psi}$ for all $\theta$. $e^{i\theta}$ is called the \emph{global phase}.
 
 The choice of measurement basis is arbitrary and dictates whether something even is a superposition or not.
 Measuring $\ket{+}$ in the computational basis yields equal probability outcomes, yet measuring in the Hadamard basis always gives the same answer, since $\ket{+}$ is a part of that basis.
@@ -272,11 +272,11 @@ are obtained by stringing together quantum gates. A circuit graphically represen
 Qubits are represented by individual rows, or wires, in the circuit. In this thesis, the convention used will be that the rightmost qubit when written mathematically corresponds to the top qubit in the circuit.
 This is the standard for quantum simulators and frameworks.
 
-Gates are boxes placed on wires. Multi-qubit gates cover multiple wires. Particularly useful multi-qubit gates have dedicated representation. 
-For example controlled gates are represented with dots on the control wire, connected to the box on the target wire.
-Consecutive gates on the same wire corresponds to matrix multiplication, while parallel gates on separate wires to tensor products.
+Gates are boxes placed on wires. Multi-qubit gates cover multiple wires. Particularly useful multi-qubit gates have dedicated representations.
+For example, controlled gates are represented with dots on the control wire, connected to the box on the target wire.
+Consecutive gates on the same wire correspond to matrix multiplication, while parallel gates on separate wires correspond to tensor products.
 
-Lastly measurements have their own special symbol, sometimes connecting to classical registers.
+Lastly, measurements have their own special symbol, sometimes connecting to classical registers.
 
 \begin{figure}[htpb]
     \centering
@@ -299,8 +299,8 @@ There are applications, such as Hamiltonian simulations, in which we would want 
 As previously discussed, non-unitary matrices cannot be quantum gates because they would change the norm of the quantum state.
 
 Surprisingly, there are ways to work around this limitation, and the secret is adding more qubits to the register and going up in dimension.
-Consider a matrix a non-unitary matrix $A$. If we want to apply this to some state $\ket{\psi}$, we must first add an additional qubit, called an \emph{ancilla}.
-Then we work out a new unitary metrix $U$, which when applied to our new total state $\ket{0}\ket{\psi}$ will result in a superposition.
+Consider a non-unitary matrix $A$. If we want to apply this to some state $\ket{\psi}$, we must first add an additional qubit, called an \emph{ancilla}.
+Then we work out a new unitary matrix $U$, which when applied to our new total state $\ket{0}\ket{\psi}$ will result in a superposition.
 One of the substates will have our desired $A\ket{\psi}$, while the other will have an auxiliary substate with the purpose of equalizing any norm change.
 
 \begin{equation*}
@@ -323,7 +323,7 @@ With this restriction in place, we can work out our $U$. From how we previously 
     U &= \begin{pmatrix} A & \sqrt{I - A A^\dagger} \\ \sqrt{I - A^\dagger A} & -A^\dagger \end{pmatrix}
 \end{align*}
 Mathematically, $U$ is known as a Sz.-Nagy dilation of $A$ \cite{szHokefalvi1954contractions}, this particular form being known as the Schaffer form \cite{schaffer1955unitary}.
-The full derivation can be found in Appendix~\ref{app:Schaffer}
+The full derivation can be found in Appendix~\ref{app:Schaffer}.
 In Quantum Computing, $U$ is known as a \emph{block encoding} of $A$.
 
 However, this $U$ is still inconvenient for quantum circuits. We need a concrete path of building it from standard quantum gates.
@@ -346,7 +346,7 @@ The crucial step is what happens once we revert $P$, by applying $P^\dagger$:
     (P^\dagger \otimes I) &\left( \sqrt{\frac{\alpha_0}{\lambda}}\ket{0}U_0\ket{\psi} + \sqrt{\frac{\alpha_1}{\lambda}}\ket{1}U_1\ket{\psi} \right) \\
     &= \frac{1}{\lambda} \ket{0} A \ket{\psi} + \ket{1} \ket{\Phi^\perp}
 \end{align*}
-with $\ket{\Phi^\perp}$ itself being an unimportant throwaway state. For the full derivation, see Appendix~\ref{app:inverse_prepare}
+with $\ket{\Phi^\perp}$ itself being an unimportant throwaway state. For the full derivation, see Appendix~\ref{app:inverse_prepare}.
 
 \begin{figure}[htpb]
     \centering
@@ -373,7 +373,7 @@ In general, the success probability of measuring into the $\ket{0}$ substate dep
 
 Some of the earliest work in quantum algorithms for CFD was done by Yepez in the late 90s to early 2000s.
 He showed that the \emph{Quantum Lattice Gas Automata} (QLGA), which had been developed for quantum multi-body problems \cite{boghosian1997gas}, could be used to model classical fluid flows \cite{yepez1998lattice}.
-He later proposed an algorithm for the QLGA on a Type-II Quantum Computer, which is a hybrid system of quantum computers that can communicate via classical channels. \cite{yepez2001lattice}.
+He later proposed an algorithm for the QLGA on a Type-II Quantum Computer, which is a hybrid system of quantum computers that can communicate via classical channels \cite{yepez2001lattice}.
 
 After these initial developments, there was a long period of little to no activity in the field.
 During this time, however, several important quantum algorithms were developed, such as the HHL algorithm for solving linear systems of equations \cite{harrow2009quantum} or various ordinary differential equations (ODE) solvers \cite{kacewicz2006almost,leyton2008quantum}.
@@ -386,7 +386,7 @@ Mirroring the classical approaches, quantum algorithms for CFD also fall under t
 Subsequently, we will discuss a couple of quantum algorithms for CFD.
 
 \paragraph*{Quantum Navier-Stokes Solver}
-In 2020 Gaitan published a quantum algorithm for solving the Navier-Stokes equations \cite{gaitan2020finding}.
+In 2020, Gaitan published a quantum algorithm for solving the Navier-Stokes equations \cite{gaitan2020finding}.
 Despite being presented in the context of CFD, the author claims it has general applicability to any system of partial differential equations.
 The algorithm itself consists of two main parts:
 \begin{enumerate}
@@ -402,7 +402,7 @@ To determine the performance gain, Gaitan performs a complexity analysis of the 
 The results show that the time complexity depends on the smoothness (Hölder class) of the function being solved. For smooth functions, all algorithms have the same complexity.
 For "rough" functions, however, the quantum algorithm shows a square root speedup over probabilistic classical algorithms and an exponential speedup over deterministic classical algorithms.
 
-The main drawback of the algorithm is the fact that it is hybrid. In particular it repeatedly uses the Quantum Amplitude Estimation Algorithm as a subroutine. The constant communication between the quantum and classical parts of the algorithm could be a bottleneck in practice.
+The main drawback of the algorithm is the fact that it is hybrid. In particular, it repeatedly uses the Quantum Amplitude Estimation Algorithm as a subroutine. The constant communication between the quantum and classical parts of the algorithm could be a bottleneck in practice.
 
 \paragraph*{Hydrodynamic Schrödinger Equation}
 While the vast majority of continuum methods are focused on the Navier-Stokes equations, they are not the only option available.
@@ -427,7 +427,7 @@ The key idea behind this formulation is the similarity between some quantities o
 
 Since it is formulated in terms of hydrodynamical variables, we can imagine a fictitious fluid that obeys these equations. Because the Madelung equations are equivalent to the Schrödinger equation, they can more naturally be implemented on a quantum computer.
 
-The major problem, however, is that this fictitious fluid does not behave similarly enough to real fluids. In particular it lacks viscosity and vorticity.
+The major problem, however, is that this fictitious fluid does not behave similarly enough to real fluids. In particular, it lacks viscosity and vorticity.
 This is where Yang and Meng's contribution lies. They managed to generalize the Madelung equations to better model real fluids.
 They called the flow described by this equation the \emph{Schrödinger Flow}.
 The authors validated that the Schrödinger Flow can indeed model real fluids by using it to simulate turbulent flows in 2D and 3D. The simulation was a Direct Numerical Simulation (DNS) done classically.
@@ -443,11 +443,11 @@ Steps 1 and 3 do provide exponential speedups over classical implementations of 
 The authors want to tackle these bottlenecks in future works.
 
 Even ignoring the proposed algorithm's current limitations, the Schrödinger Flow model itself is not perfect.
-Despite being able to model some turbulent flows it is not yet a universal model for all fluid flows.
+Despite being able to model some turbulent flows, it is not yet a universal model for all fluid flows.
 
 \paragraph*{Quantum Lattice Boltzmann Methods}
 As previously discussed, in the Classical LBM, the distribution function describes the proportion of particles moving in a specific direction.
-There is however an alternative way to interpret this function, one that better leads to \emph{Quantum Lattice Boltzmann Methods} (QLBMs).
+There is, however, an alternative way to interpret this function, one that better leads to \emph{Quantum Lattice Boltzmann Methods} (QLBMs).
 
 Instead of thinking about many particles moving in different directions, we can imagine a single particle that has different \emph{probabilities} of moving in different directions.
 Now our particle is in a \emph{superposition} of the different directions. We can model a single lattice site as a quantum state:
@@ -455,7 +455,7 @@ Now our particle is in a \emph{superposition} of the different directions. We ca
     \label{eq:qlbm}
     \ket{\psi_x} = \ket{x}\sum_{i} \frac{f_{i}(x)}{f(x)} \ket{i}
 \end{displaymath}
-where $\ket{x}$ is an encoding of the site x and $\ket{i}$ is the basis state corresponding to direction $i$.
+where $\ket{x}$ is an encoding of the site $x$ and $\ket{i}$ is the basis state corresponding to direction $i$.
 
 An alternative mapping is to consider a tensor product instead of a sum:
 \begin{displaymath}
@@ -463,7 +463,7 @@ An alternative mapping is to consider a tensor product instead of a sum:
     \ket{\psi_x} = \ket{x}\bigotimes_{i} (\sqrt{1-f_i(x)}\ket{0} + \sqrt{f_i(x)}\ket{1})
 \end{displaymath}
 
-In both cases the total state is a superposition of all lattice sites.
+In both cases, the total state is a superposition of all lattice sites.
 Unfortunately, Schalkers and Möller showed that both of these encodings have issues \cite{schalkers2024importance}:
 \begin{itemize}
     \item The first encoding does not admit a unitary \emph{collision operator}
@@ -473,7 +473,7 @@ Unfortunately, Schalkers and Möller showed that both of these encodings have is
 This means that any practical QLBM will have to use more sophisticated encodings, techniques or trade-offs.
 
 There are many different QLBMs proposed, each with different encodings and ways to implement the collision and streaming operators.
-We will be focusing on Budinski's QLBM \cite{budinski2021quantum} because of its intuitive encoding and importance in literature.
+We will be focusing on Budinski's QLBM \cite{budinski2021quantum} because of its intuitive encoding and importance in the literature.
 Other QLBMs will be briefly mentioned when relevant.
 
 Given a D1Q2 lattice with $M$ sites, Budinski's encoding is:
@@ -487,13 +487,13 @@ The encoding can be generalized to other lattice schemas.
 This encoding looks similar to the first encoding presented, but the auxiliary qubit is very important.
 That qubit allows Budinski to implement the normally non-unitary collision operator as a block encoding.
 
-The propagation step is implemented similar to a quantum walk \cite{childs2009universal}, by shifting the qubits left and right respectively.
+The propagation step is implemented similarly to a quantum walk \cite{childs2009universal}, by shifting the qubits left and right respectively.
 
 Budinski tested his QLBM by simulating a simple advection-diffusion using both D1Q2 and D2Q5 lattices.
 The results match both analytical solutions and classical simulations.
 
 He later extended the method to the Navier-Stokes equations \cite{ljubomir2022quantum} via the stream-vorticity formulation and validated his results in a lid-driven cavity flow simulation.
 
-For a DmQn lattice with M sites, the complexity analysis of this algorithm shows it is logarithmic in the number of lattice sites: $O(n\log(mM))$. This is a significant speedup over classical Lattice Boltzmann Methods which are linear.
-Unfortunately this QLBM has a crucial limitation: each time step requires measurements and a new initialization of the state.
+For a DmQn lattice with M sites, the complexity analysis of this algorithm shows it is logarithmic in the number of lattice sites: $O(n\log(mM))$. This is a significant speedup over classical Lattice Boltzmann Methods, which are linear.
+Unfortunately, this QLBM has a crucial limitation: each time step requires measurements and a new initialization of the state.
 It is especially oppressive as the encoding (which was excluded from the above complexity) is linear in the number of lattice sites.

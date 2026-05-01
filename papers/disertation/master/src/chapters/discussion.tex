@@ -2,16 +2,16 @@
 \label{chapter:discussion}
 
 While the simulator shows agreement with its classical counterpart, in order for it to be practical it must provide a tangible quantum speedup.
-Some limitations are inherent to the QLBM and are active areas of research in the field, others are unique to the ideas we explored in this thesis.
+Some limitations are inherent to the QLBM and are active areas of research in the field; others are unique to the ideas we explored in this thesis.
 
 \section{Quantum State Tomography}
 The largest blocker for the practicality of the QLBM comes from the design itself.
 Each iteration involves encoding the distribution into the state, evolving it and lastly extracting the next distribution.
-Recall however that measuring a quantum state yields a single basis state; all amplitudes are essentially erased.
+Recall, however, that measuring a quantum state yields a single basis state; all amplitudes are essentially erased.
 
 To recover the distribution function we need all amplitudes of the superposition.
 For the experiments in this thesis, we sidestepped this and directly read the simulator statevector.
-On a real quantum computer however this is impossible, the only way to recover the amplitudes is to perform \emph{quantum state tomography} (QST),
+On a real quantum computer, however, this is impossible; the only way to recover the amplitudes is to perform \emph{quantum state tomography} (QST),
 an expensive process involving repeatedly running the circuit (shots) in order to reconstruct the state from the probability distributions.
 To make matters worse, the usage of the LCU technique introduces a chance that any measurement will be a failure and have to be discarded.
 The silver lining is that we do not require the entire quantum state, only the absolute values of each amplitude. This lowers the number of shots needed.
@@ -30,7 +30,7 @@ Shot counts were spaced logarithmically and each trial was repeated 5 times to s
 \end{figure}
 
 According to the results, the error decreases linearly.
-However it takes around $10^6$ shots \emph{per iteration} to achieve an error of $10^-3$, which is still orders of magnitude above the highest errors encountered in the previous experiments.
+However, it takes around $10^6$ shots \emph{per iteration} to achieve an error of $10^{-3}$, which is still orders of magnitude above the highest errors encountered in the previous experiments.
 The independence of the error with respect to lattice size (8 vs 16 sites) is explained by the process of recovering the amplitudes.
 Since the measurement probability is the square of the absolute amplitude, we must take the square root of the measured probabilities to recover each link distribution.
 Applying a square root to the sampled binomial distribution is an example of a \emph{variance-stabilizing transformation} \cite{casella2002statistical}, causing the sampling variance to only depend on shot count.
@@ -59,9 +59,9 @@ A full explanation can be found in Appendix~\ref{app:variance_stabilization}.
     \label{fig:qst_discard}
 \end{figure}
 
-The percentage of discarded shots due to measuring the ancilla in the $\ket{1}$ state quickly converges to ~$70\%$, consistent with the previous success probability experiment. Even so, almost tripling the shot count further exacerbates the bottleneck of QST.
+The percentage of discarded shots due to measuring the ancilla in the $\ket{1}$ state quickly converges to $\sim 70\%$, consistent with the previous success probability experiment. Even so, almost tripling the shot count further exacerbates the bottleneck of QST.
 
-Given that the need for QST is the most severe bottleneck of the method, there is plenty of active research on how to mitigate it, such as Kocherla et al's Restless QLBM which can delay the need for measurement until the end of the simulation \cite{kocherla2024fully}.
+Given that the need for QST is the most severe bottleneck of the method, there is plenty of active research on how to mitigate it, such as Kocherla et al.'s Restless QLBM which can delay the need for measurement until the end of the simulation \cite{kocherla2024fully}.
 While the theoretical improvement is substantial, their simulator tackles a simplified setup that does not recover the full Boltzmann Equation.
 
 A way to sidestep this limitation is to no longer care about the full distribution function.
@@ -78,7 +78,7 @@ In this regard, the QLBM will directly benefit from any advancements made, such 
 The aforementioned distribution parametrization technique serves a dual function and also greatly reduces the initialization cost.
 
 For the collision step, even ignoring the necessity of using $LCU$, the unitaries themselves are impractical to transpile and run even in simulators.
-Budinski's original work manually decomposed each diagonal intro controlled phase-shift gates and thus achieved an efficient decomposition that only depended on the number of links \cite{budinski2021quantum}.
+Budinski's original work manually decomposed each diagonal into controlled phase-shift gates and thus achieved an efficient decomposition that only depended on the number of links \cite{budinski2021quantum}.
 However, that decomposition is only possible when the advection velocity field is assumed to be uniform. 
 When the velocity field is allowed to vary spatially, such as in the case of our simulator, the most efficient decomposition of a diagonal gate still scales exponentially with the number of spatial qubits.
 

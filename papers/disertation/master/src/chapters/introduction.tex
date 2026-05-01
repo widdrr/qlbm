@@ -4,7 +4,7 @@
 Simulating physical quantum systems has been one of the original proposed applications of quantum computing \cite{feynman2018simulating}.
 While applications of quantum computing for quantum physics are inherently natural, simulating classical physics remains in its preliminary stages.
 Complex physical systems, especially ones described by partial differential equations, suffer from high-dimensional phase spaces,
-making large scale or high precision simulations difficult.
+making large-scale or high-precision simulations difficult.
 The simulation of fluids is one such class of problems.
 
 \textbf{Computational Fluid Dynamics} (CFD) is the field concerned with the numerical simulation of fluids and their behavior.
@@ -15,7 +15,7 @@ A quantum speedup for CFD simulations could have significant impact, assuming a 
 
 Among the various methods explored in the literature, the Quantum Lattice Boltzmann Method (QLBM) is a promising candidate with several groups actively researching it \cite{budinski2021quantum,itani2024quantum,kocherla2024fully, xu2025improved, tiwari2025algorithmic,wawrzyniak2025base}.
 The QLBM, as the name suggests, is a variant of the classical Lattice Boltzmann Method for CFD designed to run on quantum computers.
-The standard LBM steps: Collision, and Streaming are transformed into quantum gates and circuits with the goal of achieving better time and memory complexities via quantum parallelism and superposition.
+The standard LBM steps, Collision and Streaming, are transformed into quantum gates and circuits with the goal of achieving better time and memory complexities via quantum parallelism and superposition.
 
 In this thesis, we present a fully generic and parameterized implementation of a QLBM simulator with support for arbitrary velocity sets and in-lattice boundary conditions.
 Previous research hardcoded specific boundary conditions, such as bounce-back, directly into the circuit.
