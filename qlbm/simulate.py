@@ -14,6 +14,7 @@ def simulate_flow(
     initial_density: NDArray[np.float64],
     configs: list[tuple[int, NDArray[np.float64], list[list[int]], list[float], np.float64, Optional[NDArray[np.float64]]]],
     filename: str,
+    optimization_level: int = 0,
 ) -> None:
     simulator = StatevectorSimulator()
 
@@ -69,22 +70,22 @@ def simulate_flow(
             encode_links_gate = encode_links(link_qubits, num_links).to_gate(label='encode_links')
             qc_temp = QuantumCircuit(num_qubits)
             qc_temp.append(encode_links_gate, list(range(site_qubits, num_qubits - 1)))
-            cached_encode_links = transpile(qc_temp, simulator)
+            cached_encode_links = transpile(qc_temp, simulator, optimization_level=optimization_level)
 
             collision_gate = collision_nonuniform(site_qubits, link_qubits, combined_matrix).to_gate(label='collision')
             qc_temp = QuantumCircuit(num_qubits)
             qc_temp.append(collision_gate, list(range(num_qubits)))
-            cached_collision = transpile(qc_temp, simulator)
+            cached_collision = transpile(qc_temp, simulator, optimization_level=optimization_level)
 
             propagation_gate = propagation(site_qubits_per_dim, link_qubits, links).to_gate(label='propagation')
             qc_temp = QuantumCircuit(num_qubits)
             qc_temp.append(propagation_gate, list(range(0, num_qubits - 1)))
-            cached_propagation = transpile(qc_temp, simulator)
+            cached_propagation = transpile(qc_temp, simulator, optimization_level=optimization_level)
 
             macros_gate = macros(link_qubits).to_gate(label='macros')
             qc_temp = QuantumCircuit(num_qubits)
             qc_temp.append(macros_gate, list(range(site_qubits, num_qubits)))
-            cached_macros = transpile(qc_temp, simulator)
+            cached_macros = transpile(qc_temp, simulator, optimization_level=optimization_level)
 
             component_cache[config_hash] = (cached_encode_links, cached_collision, cached_propagation, cached_macros)
             print(f"    Components built and transpiled.")

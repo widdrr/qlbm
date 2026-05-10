@@ -186,6 +186,9 @@ Surprisingly, it also showed the merged circuit results in slightly fewer gates 
 \label{sec:bc-validation}
 
 The quantum circuit was validated against the classical implementation mirroring the same boundary condition mechanism.
+The chosen scenarios are a 1D gaussian hill constrained by bounce-back boundaries
+and a 2D horizontal density strip pushed into a circular obstacle and flowing around it.
+
 
 \paragraph*{1D Bounce-Back Boundary Conditions}
 \begin{itemize}
@@ -211,7 +214,7 @@ At site $N-2$ (right wall):
 \end{figure}
 
 The error is negligible up to floating-point precision.
-Interestingly, this experiment shows the same pattern of decreased error once the velocity field becomes simple.
+We observe the same behavior of reduced error once the velocity field is removed halway through the simulation.
 
 \begin{figure}[H]
     \centering
@@ -262,7 +265,7 @@ The full set of conditions is:
     \label{fig:bc_2d_snapshots}
 \end{figure}
 
-The simulation again agrees with the classical one; however, this RMSE plot exhibits a unique roughness compared to the previous ones.
+The simulation again agrees with the classical one.
 
 \begin{figure}[H]
     \centering

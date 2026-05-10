@@ -209,9 +209,11 @@ This is the parametrization for a Taylor-Green Vortex, a classic benchmark for L
     \label{fig:3d_snapshots}
 \end{figure}
 
-This configuration yielded the highest error out of all the experiments at around $10^{-4}$.
-Despite our considerable investigation, we have not yet identified the exact mechanism behind the error.
-Based on empirical observations, our current hypothesis is that it is caused by complex, spatially varying velocity fields. 
+This configuration yielded the highest error out of all the experiments at around $10^{-10}$.
+The higher error cannot be entirely explained by a larger circuit depth compounding floating-point errors.
+Instead, it is caused by defensive guards against small floating-point values during Qiskit's transpilation process.
+For a more detailed analysis, see Appendix~\ref{app:rmse_analysis}. 
+In any case, it is not an inherent flaw in the theoretical formulation of the algorithm 
 
 \begin{figure}[H]
     \centering
@@ -240,8 +242,8 @@ This behavior is called \emph{anisotropic transport}.
     \label{fig:cross_snapshots}
 \end{figure}
 
-This shows another relatively high error compared to the simple scenarios. Interestingly, the RMSE starts decreasing once the velocity field is removed.
-This lends credence to the hypothesis for complex velocity fields.
+The most striking characteristic of this experiment's RMSE plot is the decrease in error once the velocity field is removed at iteration $15$.
+This phenomena can be explained due to the dissipative nature of pure diffusion: any noise will smooth out as the distribution relaxes to equilibrium.
 
 \begin{figure}[H]
     \centering

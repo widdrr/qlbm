@@ -1,0 +1,71 @@
+\chapter{Effect of Velocity Field Structure on RMSE}
+\label{app:rmse_analysis}
+
+Initially, both the D3Q27 and the Non-Standard D2Q9 experiments reported errors of approximately $10^{-4}$.
+Heuristically, the pattern seemed to suggest that the spatially varying velocity fields were the cause.
+
+To test the hypothesis, we compared three different velocity fields with the same magnitude of $0.2$:
+\begin{itemize}
+    \item \textbf{Uniform}: identical velocity at every site.
+    \item \textbf{Sinusoidal}: smooth neighbour variation over one full period across the lattice.
+    \item \textbf{Alternating}: sign flips at every site, maximising neighbour variation.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cccc}
+\toprule
+Grid & Velocity field & Gate count & Max.\ absolute error \\
+\midrule
+$4\times4\times4$ & Uniform     &  4{,}219 & $5.20 \times 10^{-17}$ \\
+$4\times4\times4$ & Sinusoidal  &  5{,}251 & $1.51 \times 10^{-6}$ \\
+$4\times4\times4$ & Alternating &  4{,}339 & $7.98 \times 10^{-17}$ \\
+\midrule
+$8\times8\times8$ & Uniform     & 32{,}891 & $8.67 \times 10^{-18}$ \\
+$8\times8\times8$ & Sinusoidal  & 35{,}259 & $5.90 \times 10^{-7}$ \\
+$8\times8\times8$ & Alternating & 33{,}011 & $3.12 \times 10^{-17}$ \\
+\bottomrule
+\end{tabular}
+\caption{Gate counts and error rates for the D3Q27 lattice under different velocity field configurations.}
+\label{tab:collision_vf}
+\end{table}
+
+According to the data in Table~\ref{tab:collision_vf}, how the field varies is more important than the simple fact it varies.
+The smooth, sinusoidal variation across lattice sites has an error orders of magnitude higher than the uniform and alternating cases, which are comparable to each other.
+
+To further investigate the root cause, we analysed the source code for the Qiskit transpiler and managed to attribute the issue to floating-point operations during the synthesis and optimisation process.
+Diagonal gates are decomposed into a series of rotations; however, if at any point the rotation angle is too small, it is dropped from the circuit.
+Examples of this can be found in \href{https://github.com/Qiskit/qiskit/blob/main/crates/synthesis/src/euler_one_qubit_decomposer.rs}{\texttt{euler\_one\_qubit\_decomposer.rs}}.
+
+To confirm our assumption, we compared optimization levels $0$, $1$ and $2$ and the manual construction approach described in Appendix~\ref{app:controlled_comparison}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Configuration & Gate count & Max.\ absolute error \\
+\midrule
+DiagonalGate sinusoidal, opt\_level=0 & 10{,}084 & $1.13 \times 10^{-12}$ \\
+DiagonalGate sinusoidal, opt\_level=1 & 10{,}081 & $1.13 \times 10^{-12}$ \\
+DiagonalGate sinusoidal, opt\_level=2 & 5{,}257 & $1.51 \times 10^{-6}$ \\
+DiagonalGate alternating, opt\_level=0 & 4{,}348 & $1.04 \times 10^{-16}$ \\
+DiagonalGate alternating, opt\_level=1 & 4{,}345 & $7.98 \times 10^{-17}$ \\
+DiagonalGate alternating, opt\_level=2 & 4{,}345 & $7.98 \times 10^{-17}$ \\
+DiagonalGate sinusoidal, manual unitary & 10 & $6.94 \times 10^{-18}$ \\
+\bottomrule
+\end{tabular}
+\caption{Effect of optimization level on gate count and error rate.}
+\label{tab:collision_opt}
+\end{table}
+
+The results strongly support the hypothesis.
+For the sinusoidal field, the default optimisation level produces a circuit with half the gates of the lower optimisation levels, but a considerably higher error.
+Comparatively, the difference for the alternating field is negligible.
+The most plausible explanation is that many gates are dropped or optimised away due to small rotation angle values.
+Since unitary gates are considered elementary by the Statevector simulator, they are not transpiled and the manual construction results in exact precision.
+
+For this reason, all experiments in this thesis were run with optimisation level $1$.
+The manual approach, while more accurate and faster at runtime, had the drawback of requiring excessive memory to fully represent the unitary matrix, so it could not be used for larger simulations.
+
+Lastly, even optimisation level 0 does not fully resolve the higher error. This is due to some heuristics not being bypassable through standard transpiler settings, such as those in \href{https://github.com/Qiskit/qiskit/blob/main/qiskit/circuit/library/generalized_gates/uc_pauli_rot.py}{\texttt{uc\_pauli\_rot.py}}.
+Nevertheless, we have proven that the error is not an inherent issue in the theoretical quantum algorithm, but a practical consequence of floating-point arithmetic during the transpilation process.
