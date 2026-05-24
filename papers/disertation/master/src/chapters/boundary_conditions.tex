@@ -33,7 +33,7 @@ From the quantity preservation restriction, it follows that for each $B_x$ all c
 Each $B_x$ can be embedded in a larger operator $B$, describing all boundary conditions for the entire lattice.
 The simplest way to imagine it is to start with a block-diagonal containing all defined $B_x$, with $I$ instead for non-boundary lattices.
 
-\begin{equation}
+\begin{equation*}
 B = \begin{pmatrix}
     B_0    & 0      & \dots  & \dots  & 0 \\
     0      & B_1    & \ddots &        & \vdots \\
@@ -41,7 +41,7 @@ B = \begin{pmatrix}
     \vdots &        & \ddots & I      & 0 \\
     0      & \dots  & \dots  & 0      & B_{N-1}
 \end{pmatrix}
-\end{equation}
+\end{equation*}
 From the construction we can see it is also stochastic. This is important to ensure the stability of the simulation.
 
 
@@ -60,15 +60,15 @@ C = \frac{1}{2} (C + i\sqrt{I - C^2}) + \frac{1}{2}(C - i\sqrt{I - C^2})
 
 The only issue is that $B$ is not diagonal.
 Thankfully, we can perform Singular Value Decomposition (SVD):
-\begin{equation}
+\begin{equation*}
     B = U \Sigma V^{\dagger}
-\end{equation}
+\end{equation*}
 where $U, V$ are unitary and $\Sigma$ is diagonal.
 Critically, the SVD algorithm ensures $\Sigma$ will also be real-valued (positive semidefinite in fact).
 Using these facts, $\Sigma$ can be decomposed as a linear combination of two unitaries, and $U$ and $V^{\dagger}$ distributed to obtain a linear combination for $B$:
-\begin{equation}
+\begin{equation*}
     B = \frac{1}{2} (U (\Sigma + i\sqrt{I - \Sigma^2}) V^{\dagger} + U (\Sigma - i\sqrt{I - \Sigma^2}) V^{\dagger})
-\end{equation}
+\end{equation*}
 
 Note, however, that unlike with the collision operator, we do not have any guarantees $\Sigma$ will be contractive.
 To solve this, we took the simplest approach possible and normalized $\Sigma$ via dividing by its spectral norm.
@@ -130,15 +130,15 @@ If we apply them sequentially, using two ancilla qubits, the resulting state wor
 where $\ket{\Phi^\perp}$ contains all throwaway states.
 Naturally, the probability of measuring the desired $\ket{00}$ substate works out to be:
 
-\begin{equation}
+\begin{equation*}
     P_{seq} = \left\| \frac{1}{\|B\|_2 \|C\|_2} BC \ket{\psi} \right\|_2^2 = \frac{\| BC \ket{\psi} \|_2^2}{\|B\|_2^2 \|C\|_2^2}
-\end{equation}
+\end{equation*}
 
 Alternatively, when we merge the two operators, we normalize the merged operator $M = BC$ directly, obtaining $\tilde{M} = M / \|BC\|_2$.
 The probability for the merged operator is then:
-\begin{equation}
+\begin{equation*}
     P_{merged} = \| \tilde{M} \ket{\psi} \|_2^2 = \frac{\| BC \ket{\psi} \|_2^2}{\|BC\|_2^2}
-\end{equation}
+\end{equation*}
 
 Notice how the numerator is identical, so we only need to compare the denominators.
 
@@ -148,9 +148,9 @@ The L2 norm is sub-multiplicative \cite{horn2012matrix}, meaning the following i
 \end{equation*}
 
 Because these norms are strictly positive scalars, squaring both sides and taking the inverse produces:
-\begin{equation}
+\begin{equation*}
     \frac{1}{\|BC\|_2^2} \ge \frac{1}{\|B\|_2^2 \|C\|_2^2} \implies P_{merged} \ge P_{seq}
-\end{equation}
+\end{equation*}
 
 
 In order to quantify the improvement, we directly compared the merged and sequential approaches.
@@ -237,26 +237,28 @@ The general idea of the boundary condition is to reflect $20\%$ of the outgoing 
 A link is considered safe if it does not stream into the wall. The rest link $(0,0)$ is always left unchanged.
 There are two flavors of boundary nodes with slightly different conditions: edges and corners.
 
-Consider the edge node at $(6, 4)$. The only outgoing link is $(-1,0)$, which will get split between $(+1,0)$ and the two tangential directions $(0,-1)$ and $(0,+1)$.
-The full set of conditions is:
-\begin{align*}
-    f_{(-1,0)}^{post} &= 0 \\
-    f_{(+1,0)}^{post}  &=  0.2\,f_{(-1,0)}^{pre} + f_{(+1,0)}^{pre} \\
-    f_{(0,-1)}^{post} &=  0.4\,f_{(-1,0)}^{pre} + f_{(0,-1)}^{pre} \\
-    f_{(0,+1)}^{post} &=  0.4\,f_{(-1,0)}^{pre} + f_{(0,+1)}^{pre} \\
-    f_{(0,0)}^{post} &= f_{(0,0)}^{pre} 
-\end{align*}
-
-For the corner node at $(2, 3)$, both $(+1,0)$ and $(0,+1)$ point into the wall.
-After reflecting, each outgoing link only has one remaining safe direction left: $(0,-1)$ and $(-1,0)$ respectively.
-The full set of conditions is:
-\begin{align*}
-    f_{(+1,0)}^{post}   &= 0 \\
-    f_{(0,+1)}^{post}   &= 0 \\
-    f_{(-1,0)}^{post}  &= 0.2\, f_{(+1,0)}^{pre}  + f_{(-1,0)}^{pre} + 0.8\, f_{(0,+1)}^{pre} \\
-    f_{(0,-1)}^{post}  &= 0.8\, f_{(+1,0)}^{pre} + f_{(0,-1)}^{pre} + 0.2\, f_{(0,+1)}^{pre} \\
-    f_{(0,0)}^{post} &= f_{(0,0)}^{pre} 
-\end{align*}
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
+    \textbf{Edge node at $(6, 4)$}: one outgoing link $(-1,0)$, split between the reflected direction $(+1,0)$ and the two tangential directions $(0,\pm1)$.
+    \begin{align*}
+        f_{(-1,0)}^{post} &= 0 \\
+        f_{(+1,0)}^{post}  &=  0.2\,f_{(-1,0)}^{pre} + f_{(+1,0)}^{pre} \\
+        f_{(0,-1)}^{post} &=  0.4\,f_{(-1,0)}^{pre} + f_{(0,-1)}^{pre} \\
+        f_{(0,+1)}^{post} &=  0.4\,f_{(-1,0)}^{pre} + f_{(0,+1)}^{pre} \\
+        f_{(0,0)}^{post}  &= f_{(0,0)}^{pre}
+    \end{align*}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+    \textbf{Corner node at $(2, 3)$}: two outgoing links $(+1,0)$ and $(0,+1)$ point into the wall, each with only one remaining safe direction: $(0,-1)$ and $(-1,0)$ respectively.
+    \begin{align*}
+        f_{(+1,0)}^{post}  &= 0 \\
+        f_{(0,+1)}^{post}  &= 0 \\
+        f_{(-1,0)}^{post}  &= 0.2\,f_{(+1,0)}^{pre} + f_{(-1,0)}^{pre} + 0.8\,f_{(0,+1)}^{pre} \\
+        f_{(0,-1)}^{post}  &= 0.8\,f_{(+1,0)}^{pre} + f_{(0,-1)}^{pre} + 0.2\,f_{(0,+1)}^{pre} \\
+        f_{(0,0)}^{post}   &= f_{(0,0)}^{pre}
+    \end{align*}
+\end{minipage}
 
 \begin{figure}[H]
     \centering
@@ -283,10 +285,15 @@ Since the combined collision-boundary matrix has $k = M\cdot N$, the cost of the
 This preprocessing is only performed once per distinct configuration, so the upfront computation is amortized across the simulation iterations.
 However, since the complexity itself is exponential, this step remains a bottleneck requiring an astronomical number of iterations to negate.
 
-The circuit depth of the transpiled circuit does not change its complexity class, remaining at $\mathcal{O}(M\cdot N)$.
-The inclusion of the boundary condition operator does, however, force the matrix closer to the theoretical worst case complexity.
-Because the operator is no longer diagonal, each unitary will have a significantly larger number of gates and circuit depth.
+With the introduction of the boundary conditions, the LCU matrices are no longer diagonals.
+For a general unitary $U$, the complexity of the best known decomposition depends on the number of non-zero entries ($\operatorname{nnz}$): $\mathcal{O}(k\operatorname{nnz}(U))$ \cite{malvetti2021quantum}.
+Fortunately, our matrix is highly sparse. Consider the worst case scenario: each lattice site has a boundary condition described by a dense matrix of size $2^n \times 2^n$.
+Given the permuted block-diagonal construction of the combined operator presented earlier, the total number of non-zero entries in the combined matrix will be $\operatorname{nnz}=4^n2^m=2^{2n+m}$.
 
+Thus, the new complexity for the combined collision-boundary step will be $\mathcal{O}((n+m)(2^{2n+m}))$ or $\mathcal{O}(\log(NM)N^2M)$.
+Compared to the previous linear complexity, this is strictly worse. In practice $N \ll M$ and can even be treated as a constant. Moreover most simulations will only use boundary conditions on a small fraction of the lattice sites.
+
+Still, the linearithmic scaling with respect to lattice sites and the extra "constant" terms do have an impact.
 To quantify this impact, we extended the previous transpilation experiment to include variations with boundary conditions defined.
 In both cases, boundary nodes were defined at the edge of the respective lattice.
 
@@ -308,5 +315,7 @@ D2Q5 $4{\times}4$ & 8 & 4 & 3{,}219 / 2{,}188 & 154{,}610 / 99{,}320 & $48.0\tim
 \end{tabular}
 \end{table}
 
-The data shows a substantial increase that further scales with the qubit count.
-Additionally, the number of boundary nodes appears to be insignificant, as evidenced by the 2D configuration having roughly the same number of gates as the 1D one with the same number of qubits.
+The data shows a substantial increase compared to the simple collision matrix. Moreover, each additional qubit quadruples the circuit depth.
+Surprisingly, the number of boundary nodes appears to be insignificant, as evidenced by the 2D configuration having roughly the same number of gates as the 1D one with the same number of qubits.
+The discrepancy is explained by the Qiskit source code using Quantum Shannon Decomposition (QSD) \cite{shende2006synthesis}, as opposed to more efficient algorithms considered in the complexity analysis section.
+QSD has complexity $\mathcal{O}(4^n)$, precisely matching the growth pattern of the data.

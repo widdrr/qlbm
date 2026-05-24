@@ -34,10 +34,9 @@ The most common discretization methods are the \emph{Finite Volume Method} (FVM)
 
 Going down, fluids at intermediate scales (mesoscale) are best described by statistical mechanics. Instead of a continuum, the fluid is comprised of statistical ensembles of particles.
 The probability density of these particles evolves according to the \emph{Boltzmann equation}.
-\begin{equation}
-    \label{eq:boltzmann_general}
+\begin{equation*}
     \frac{\partial}{\partial t}f + \frac{\mathbf{p}}{m} \cdot \nabla f + \mathbf{F} \cdot \frac{\partial}{\partial \mathbf{p}}f = \Omega(f)
-\end{equation}
+\end{equation*}
 where $f$ is the particle distribution function, $\pmb{p}$ is the momentum, $m$ is the mass, $\pmb{F}$ is the body (external) force and $\Omega(f)$ is the collision operator.
 
 One of the most widespread methods for mesoscale flows is the \emph{Lattice Boltzmann Method} (LBM) \cite{chen1998lattice}, which we detail in the following section.
@@ -124,22 +123,21 @@ The common notation used to denote discretization schemas is the DnQm notation, 
 
 The distributions on each lattice site are commonly referred to as \emph{link distributions}.
 Each link distribution has an associated link velocity and represents the proportion of the simulated quantity that will propagate along that link.
+Figure~\ref{fig:disc} shows an example of such a discretization.
 
-The evolution of the discrete distribution function $f_i$ at position $\mathbf{x}$ and time $t$ is governed by the Discrete Boltzmann Equation:
-\begin{equation}
+The evolution of the discrete distribution function $f_i$ at position $\mathbf{x}$ and time $t$ is governed by the Discrete Boltzmann Equation \cite{kruger2016lattice}:
+\begin{equation*}
     f_i(\mathbf{x} + \mathbf{e}_i \Delta t, t + \Delta t) = f_i(\mathbf{x}, t) + \Omega_i(f)
-    \label{eq:lbe_full}
-\end{equation}
+\end{equation*}
 where $\mathbf{e}_i$ are the discrete lattice velocities and $\Omega_i$ is the collision operator.
 
 In a numerical simulation, this is usually done in two distinct steps:
 
 \paragraph{1. Collision Step:}
-the distributions are modified by the collision operator, which encodes the specific mesoscale behavior of the system being modeled:
-\begin{equation}
+the distributions are modified by the collision operator, which encodes the specific mesoscale behavior of the system being modeled \cite{kruger2016lattice}:
+\begin{equation*}
     f_i^*(\mathbf{x}, t) = f_i(\mathbf{x}, t) + \Omega_i(f)
-    \label{eq:collision_general}
-\end{equation}
+\end{equation*}
 
 Various collision operators exist for different scenarios, but the most commonly used one is the Bhatnagar-Gross-Krook (BGK) operator \cite{bhatnagar1954model}.
 This model assumes that the distributions relax toward a local equilibrium state, $f_i^{\text{eq}}$, over a relaxation time $\tau$:
@@ -149,11 +147,10 @@ This model assumes that the distributions relax toward a local equilibrium state
 \end{equation}
 
 \paragraph{2. Streaming Step:}
-the post-collision distributions are propagated to adjacent nodes according to their respective link velocity vectors:
-\begin{equation}
+the post-collision distributions are propagated to adjacent nodes according to their respective link velocity vectors \cite{kruger2016lattice}:
+\begin{equation*}
     f_i(\mathbf{x} + \mathbf{e}_i \Delta t, t + \Delta t) = f_i^*(\mathbf{x}, t)
-    \label{eq:streaming}
-\end{equation}
+\end{equation*}
 
 Finally, the link distributions are summed up in order to recover the macroscopic distribution.
 
@@ -275,6 +272,7 @@ This is the standard for quantum simulators and frameworks.
 Gates are boxes placed on wires. Multi-qubit gates cover multiple wires. Particularly useful multi-qubit gates have dedicated representations.
 For example, controlled gates are represented with dots on the control wire, connected to the box on the target wire.
 Consecutive gates on the same wire correspond to matrix multiplication, while parallel gates on separate wires correspond to tensor products.
+Figure~\ref{fig:circuit_conventions} shows an example of a quantum circuit.
 
 Lastly, measurements have their own special symbol, sometimes connecting to classical registers.
 
@@ -429,8 +427,7 @@ Since it is formulated in terms of hydrodynamical variables, we can imagine a fi
 
 The major problem, however, is that this fictitious fluid does not behave similarly enough to real fluids. In particular, it lacks viscosity and vorticity.
 This is where Yang and Meng's contribution lies. They managed to generalize the Madelung equations to better model real fluids.
-They called the flow described by this equation the \emph{Schrödinger Flow}.
-The authors validated that the Schrödinger Flow can indeed model real fluids by using it to simulate turbulent flows in 2D and 3D. The simulation was a Direct Numerical Simulation (DNS) done classically.
+They called the flow described by this equation the \emph{Schrödinger Flow} and validated that it by simulating turbulent flows in 2D and 3D. The simulation was a Direct Numerical Simulation (DNS) done classically.
 
 Alongside the new equations, they also proposed a fully quantum algorithm for simulating the case of the Incompressible Schrödinger Flow.
 The algorithm consists of 5 steps per time step of simulation, with measurements only at the end of the simulation.
@@ -440,7 +437,7 @@ The simulations were performed using Qiskit \cite{qiskit2024} and matched the th
 
 Unfortunately, the algorithm does not yet provide a speedup over classical methods. Of the 4 steps in the algorithm, steps 2 and 4 are bottlenecks with no known efficient implementations.
 Steps 1 and 3 do provide exponential speedups over classical implementations of those specific operations.
-The authors want to tackle these bottlenecks in future works.
+The bottlenecks were left to be tackled as future work.
 
 Even ignoring the proposed algorithm's current limitations, the Schrödinger Flow model itself is not perfect.
 Despite being able to model some turbulent flows, it is not yet a universal model for all fluid flows.

@@ -43,18 +43,18 @@ The number of qubits required for the total state is:
 
 The resulting state is:
 
-\begin{equation}
+\begin{equation*}
     \ket{\psi} = \ket{0}\ket{0}^n\sum_{x} \frac{\Phi(x)}{||\Phi(x)||} \ket{x}
-\end{equation}
+\end{equation*}
 
 where the first qubit is the ancilla, the next $n$ qubits encode the link index and the remaining $m$ qubits encode the lattice site index.
 The initialization is performed via Qiskit's \texttt{initialize} function to prepare a state given arbitrary amplitudes.
 
-Following Wawrzyniak et al., we only initialize one of the link substates like this and make use of Hadamard gates to prepare the remaining substates.
+Following Wawrzyniak et al. \cite{wawrzyniak2025base}, we only initialize one of the link substates like this and make use of Hadamard gates to prepare the remaining substates.
 
-\begin{equation}
+\begin{equation*}
     \ket{\psi} = \ket{0}\frac{1}{\sqrt{2^n}}\sum_{i}^{2^n} \ket{i}\sum_{x}\frac{\Phi(x)}{||\Phi(x)||} \ket{x}
-\end{equation}
+\end{equation*}
 
 \paragraph*{Collision}
 Starting from Equation~\ref{eq:bgk_operator} for the LBM BGK collision, we can perform a common simplification by choosing $\tau=1$.
@@ -65,16 +65,16 @@ This implies that our distributions relax to the equilibrium each time step:
 This is standard for QLBM algorithms \cite{budinski2021quantum,wawrzyniak2025base} and follows a well-known scheme in classical LBMs \cite{junk1999new}.
 
 From the Advection-Diffusion Equation (\ref{eq:advection-diffusion}), we can obtain a linear approximation and determine the formula for the equilibrium distribution:
-\begin{equation}
+\begin{equation*}
     f_i^{eq} = w_i \Phi \left( 1 + \frac{\mathbf{c}_i \cdot \mathbf{u}(\mathbf{x},t)}{c_s^2} \right),
-\end{equation}
+\end{equation*}
 with $w_i>0$ being the link weight, $c_i$ being the link velocity and $c_s$ a constant representing the speed of sound in the medium \cite{kruger2016lattice}.
 In order to correctly approximate the ADE, these parameters must always obey:
-\begin{align}
+\begin{align*}
     \sum_{i} w_i &= 1 \\
     \sum_{i} w_i \mathbf{c}_{i\alpha} &= 0 \\
-    \sum_{i} w_i \mathbf{c}_{i\alpha} \mathbf{c}_{i\beta} &= c_s^2 \delta_{\alpha\beta} \\
-\end{align}
+    \sum_{i} w_i \mathbf{c}_{i\alpha} \mathbf{c}_{i\beta} &= c_s^2 \delta_{\alpha\beta}
+\end{align*}
 
 Since $\Phi$ is encoded in the amplitudes of the lattice qubits and the link qubits are in a uniform superposition, collision can be implemented as a single diagonal matrix $M$ of size $2^{m+n} \times 2^{m+n}$, where $m$ is the number of lattice qubits and $n$ is the number of link qubits.
 \begin{equation*}
@@ -102,7 +102,7 @@ the $P$ Gate is simply the $H$ Gate.
 
 \paragraph*{Streaming}
 Streaming involves propagating the link distributions to neighboring sites based on the link velocities.
-The basic operation is shifting the amplitudes of a quantum state left or right, denoted as $LGate$ and $RGate$ respectively.
+The basic operation is shifting the amplitudes of a quantum state left or right, denoted as $LGate$ and $RGate$ respectively in Figure~\ref{fig:streaming_gates}.
 
 \begin{figure}[H]
     \centering
@@ -126,8 +126,9 @@ These circuits "wrap" around upon reaching the boundary state, naturally impleme
 Finally, the macroscopic distribution is recovered by summing over the link distributions.
 This can be done either classically, after obtaining the final state, or by applying a series of Hadamard and Swap gates to accumulate the distributions into a single link substate.
 
-Our implementation uses the quantum variant.
+Our implementation uses the quantum variant. An example of a complete circuit is show in Figure~\ref{fig:complete_circuit}
 Lastly, the resultant distribution must be classically rescaled to the original norm because the quantum state was normalized.
+
 
 \section{Experimental Validation}
 \label{sec:validation}
@@ -137,7 +138,7 @@ We could not find an existing classical simulator that would produce an output i
 The classical simulator follows the same collision formulas but avoids the pitfall of simply reimplementing the quantum algorithm as vector-matrix multiplication.
 The speed of sound was the same in all experiments: $c_s=\frac{1}{\sqrt{3}}$.
 
-All code is open source and available at \url{https://github.com/widdrr/qlbm}
+All code is open source and available on GitHub~\cite{qlbm2025github}
 
 \paragraph*{1D Simulation}
 \begin{itemize}
@@ -277,6 +278,7 @@ All in all, the initialization step is linear.
 \paragraph*{Collision} is defined as a linear combination of unitaries, with each unitary gate being a diagonal.
 Naturally the bottleneck of this stage will be the decomposition of the diagonal gates into elementary ones.
 The procedure used by Qiskit's \texttt{DiagonalGate} is based on Malvetti's work \cite{malvetti2018synthesis}. The decomposition's depth is exponential in the matrix's dimension.
+For a diagonal gate in particular, the base of the exponential is $2$.
 Since we are manually computing the controlled unitaries, each matrix is $n+m+1 \times n+m+1$, meaning the final worst case complexity for the collision stage is $\mathcal{O}(2^{(m+n)})$ or $\mathcal{O}(M\cdot N)$.
 Note however that this is the worst case complexity, when the velocity field is chaotic.
 With a highly structured velocity field, the diagonals end up much easier to decompose, achieving potential polynomial or even constant complexity.

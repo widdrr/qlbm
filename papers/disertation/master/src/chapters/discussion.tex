@@ -83,7 +83,8 @@ However, that decomposition is only possible when the advection velocity field i
 When the velocity field is allowed to vary spatially, such as in the case of our simulator, the most efficient decomposition of a diagonal gate still scales exponentially with the number of spatial qubits.
 
 Adding boundary conditions in the format designed by this thesis further complicates any potential efficient decomposition, since the resulting unitaries are no longer even diagonal.
-The combined collision-boundary operator could still have structure that can be exploited for a more efficient decomposition, but that was outside the scope of this thesis.
+As previously shown, this fact elevates the complexity beyond linear, making the algorithm mathematically worse than the classical counterpart. 
+The method explored in this thesis could at least serve as a basis from which more efficient boundary conditions can be developed.
 Implementing a specific type of hardcoded boundary condition, such as Bounce-Back during the streaming process, is a much more efficient alternative that is being used in other works \cite{jennings2026simulating,lee2025advanced}.
 The drawback is losing the flexibility and generality of defining custom conditions for each node.
 

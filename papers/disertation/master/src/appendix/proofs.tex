@@ -128,9 +128,9 @@ Let $\hat{p} = K/S$ be our statistical estimator for $p$. From standard binomial
 
 However, we need to recover the post-iteration $f = \sqrt{p}$, meaning we will be trying to determine $\hat{f} = \sqrt{\hat{p}}$.
 To determine the variance, we can apply the first-order Delta method \cite{casella2002statistical} which relies on the Taylor series expansion of the applied function around its mean $\mu$:
-\begin{equation}
+\begin{equation*}
     \text{Var}(f(X)) \approx \left[ f'(\mu) \right]^2 \text{Var}(X)
-\end{equation}
+\end{equation*}
 
 Applying this for $\hat{f} = \sqrt{\hat{p}}$ we obtain:
 
@@ -144,9 +144,9 @@ In the context of the fluid simulation with $M$ lattice sites and $N$ discrete v
 While the actual distribution of the fluid matters, in general as the size of the simulation increases, the probability of measuring any specific state decreases $(p\ll1)$.
 Under these circumstances, we can simplify the variance to:
 
-\begin{equation}
+\begin{equation*}
     \text{Var}(\hat{f}) \approx \frac{1}{4S}
-\end{equation}
+\end{equation*}
 
 This result proves that the statistical variance of an approximated amplitude only depends on the total shot count.
 Defining $\rho = \sum_{i=1}^{N}f_i$ to be the real density at the site, we obtain the estimator $\hat{\rho} = \sum_{i=1}^{N}\hat{f}_i$, with variance:
@@ -155,9 +155,9 @@ Defining $\rho = \sum_{i=1}^{N}f_i$ to be the real density at the site, we obtai
 \end{equation*}
 
 By definition, the Root Mean Square Error (RMSE) of the entire lattice density will be:
-\begin{equation}
+\begin{equation*}
     \text{RMSE} = \sqrt{ \frac{1}{M} \sum_{x=1}^{M} E\left[ (\hat{\rho}_x - \rho_x)^2 \right] } = \sqrt{ \frac{1}{M} \sum_{x=1}^{M} \text{Var}(\hat{\rho}_x) }
-\end{equation}
+\end{equation*}
 
 Applying our value for $\text{Var}(\hat{\rho}_x)$ we obtain:
 
