@@ -19,16 +19,27 @@
 \begin{frontmatter} % roman numbering
 
 %\maketitle
-\input{template/titlepage.ro}
 \input{template/titlepage.en}
+\input{template/titlepage.ro}
 
 \begin{acknowledgements}
 \input{src/base/acknowledgements}
 \end{acknowledgements}
 
-\begin{abstract}
+% Abstract (English) and Sinopsis (Romanian) share one page, half each
+\clearpage
+\thispagestyle{plain}
+\vspace*{30pt}
+{\noindent\Huge\bfseries Abstract\par}
+\addcontentsline{toc}{chapter}{Abstract}
+\vspace{1.5em}
 \input{src/base/abstract}
-\end{abstract}
+\par\vfill
+{\noindent\Huge\bfseries Sinopsis\par}
+\vspace{1.5em}
+\input{src/base/sinopsis}
+\par\vfill\null
+\clearpage
 
 \input{template/contents.pages}
 

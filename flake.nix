@@ -25,6 +25,12 @@
             fancyhdr
             parskip
             setspace
+            titlesec
+            chngcntr
+            appendix
+            # localization (qc template uses Romanian babel)
+            babel-romanian
+            hyphen-romanian
             # fonts
             psnfss       # .sty files for PS fonts
             courier      # pcrr8t metrics
@@ -46,6 +52,10 @@
             environ      # quantikz dep
             # cross-references & links
             hyperref
+            # lists & misc text
+            paralist
+            enumitem
+            textcase
             # code listings
             listings
             # nomenclature & indexing
