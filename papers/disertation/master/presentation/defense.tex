@@ -340,9 +340,19 @@
   \centering
   Moving the boundary conditions before streaming stays equivalent:
   \[ B_{pre} = S^{\dagger} B_{post} S \]
-  \vspace{0.5em}
   And the merged circuit never does worse:
   \[ P_{merged} \;\ge\; P_{separate} \]
+  \vspace{0.3em}
+  {\footnotesize
+  \begin{tabular}{lcc}
+    \toprule
+    Configuration & $P_{merged}$ & $P_{separate}$ \\
+    \midrule
+    D1Q3 $N{=}4$      & 0.37 & 0.23 \\
+    D1Q3 $N{=}8$      & 0.27 & 0.16 \\
+    D2Q5 $4{\times}4$ & 0.31 & 0.23 \\
+    \bottomrule
+  \end{tabular}}
   \vfill
   \note{There were two issues to overcome. First, we had to move the boundary conditions
   to before streaming, which makes their physical meaning incorrect; fortunately, it is
